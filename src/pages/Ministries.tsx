@@ -1,95 +1,34 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Users, Heart, Book, Music, Baby, Gamepad2, Globe, Utensils } from "lucide-react";
+import { Users, Heart, Book, Music, Globe, Utensils, Sparkles } from "lucide-react";
+
+const WHATSAPP_LINK = "https://wa.me/254704129211?text=Hello%2C%20I%20want%20to%20learn%20more%20about%20ministries";
 
 const Ministries = () => {
   const ministries = [
-    {
-      icon: Users,
-      title: "Small Groups",
-      description: "Connect with others in intimate Bible study and fellowship groups that meet throughout the week.",
-      details: "Various times and locations available",
-      contact: "Contact: groups@church.org"
-    },
-    {
-      icon: Music,
-      title: "Worship Ministry",
-      description: "Join our worship team and use your musical gifts to lead others in praising God.",
-      details: "Rehearsals: Wednesdays 7 PM",
-      contact: "Contact: worship@church.org"
-    },
-    {
-      icon: Baby,
-      title: "Children's Ministry",
-      description: "Nurturing children from birth through 5th grade in a safe, fun, and faith-building environment.",
-      details: "Sundays during all services",
-      contact: "Contact: kids@church.org"
-    },
-    {
-      icon: Gamepad2,
-      title: "Youth Ministry",
-      description: "Engaging middle and high school students with relevant teaching and authentic community.",
-      details: "Wednesdays 6:30 PM",
-      contact: "Contact: youth@church.org"
-    },
-    {
-      icon: Heart,
-      title: "Community Outreach",
-      description: "Serving our neighbors through food banks, community service, and mission projects.",
-      details: "Various opportunities monthly",
-      contact: "Contact: outreach@church.org"
-    },
-    {
-      icon: Book,
-      title: "Bible Study",
-      description: "Deep dive into God's Word with weekly Bible studies for all ages and experience levels.",
-      details: "Multiple times available",
-      contact: "Contact: study@church.org"
-    },
-    {
-      icon: Users,
-      title: "Men's Ministry",
-      description: "Building strong Christian men through fellowship, accountability, and service opportunities.",
-      details: "Saturdays 7 AM",
-      contact: "Contact: men@church.org"
-    },
-    {
-      icon: Heart,
-      title: "Women's Ministry",
-      description: "Empowering women to grow in faith and build meaningful relationships with other women.",
-      details: "Tuesdays 7 PM",
-      contact: "Contact: women@church.org"
-    },
-    {
-      icon: Globe,
-      title: "Missions",
-      description: "Supporting global missions and organizing mission trips to serve communities worldwide.",
-      details: "Monthly meetings",
-      contact: "Contact: missions@church.org"
-    },
-    {
-      icon: Utensils,
-      title: "Hospitality Ministry",
-      description: "Welcoming guests and providing meals for church events and families in need.",
-      details: "As needed",
-      contact: "Contact: hospitality@church.org"
-    }
+    { icon: Music, title: "Choir Ministry", description: "Our choir lifts hearts through anointed songs and hymns, leading the congregation in powerful worship.", contact: "Join the Choir" },
+    { icon: Sparkles, title: "Praise & Worship", description: "Spirit-filled praise and worship that ushers in God's presence during every service.", contact: "Join Praise Team" },
+    { icon: Users, title: "Dance Ministry", description: "Expressing worship through anointed dance that glorifies God and inspires the congregation.", contact: "Join Dance Ministry" },
+    { icon: Users, title: "Youth Ministry", description: "Empowering the next generation to walk in faith, purpose, and God's power.", contact: "Join Youth" },
+    { icon: Heart, title: "Women Ministry", description: "Building strong, faith-filled women through fellowship, prayer, and discipleship.", contact: "Join Women Ministry" },
+    { icon: Users, title: "Men Ministry", description: "Raising godly men who lead with integrity and serve their families and communities.", contact: "Join Men Ministry" },
+    { icon: Globe, title: "Crusades", description: "Evangelistic crusades that bring the gospel to communities, with signs, wonders, and miracles.", contact: "Learn More" },
+    { icon: Utensils, title: "Hospitality Ministry", description: "Welcoming guests with warmth and ensuring every visitor feels at home in God's house.", contact: "Join Hospitality" },
+    { icon: Book, title: "Conferences (Yearly)", description: "Annual conferences featuring powerful speakers, worship, and life-changing encounters with God.", contact: "Learn More" },
   ];
 
   return (
     <div className="min-h-screen bg-white pt-16">
-      {/* Hero Section */}
       <section className="py-20 px-4 bg-gradient-to-b from-red-50 to-white">
         <div className="container mx-auto text-center">
           <h1 className="text-4xl md:text-6xl font-bold mb-6 text-black">Ministries</h1>
           <p className="text-xl md:text-2xl text-gray-600 mb-8 max-w-3xl mx-auto">
-            Discover meaningful ways to connect, grow, and serve in our church community
+            Find your place of service and grow in God's power at Global Power Church
           </p>
         </div>
       </section>
 
-      {/* Ministries Grid */}
       <section className="py-16 px-4">
         <div className="container mx-auto">
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
@@ -105,13 +44,11 @@ const Ministries = () => {
                   </CardHeader>
                   <CardContent className="flex-1 flex flex-col">
                     <p className="text-gray-600 mb-4 flex-1">{ministry.description}</p>
-                    <div className="space-y-2 mb-4">
-                      <p className="text-sm font-medium text-red-600">{ministry.details}</p>
-                      <p className="text-sm text-gray-500">{ministry.contact}</p>
-                    </div>
-                    <Button className="w-full bg-red-600 hover:bg-red-700 text-white">
-                      Learn More
-                    </Button>
+                    <a href={WHATSAPP_LINK} target="_blank" rel="noopener noreferrer">
+                      <Button className="w-full bg-red-600 hover:bg-red-700 text-white">
+                        {ministry.contact}
+                      </Button>
+                    </a>
                   </CardContent>
                 </Card>
               );
@@ -120,93 +57,22 @@ const Ministries = () => {
         </div>
       </section>
 
-      {/* Get Involved Section */}
       <section className="py-16 px-4 bg-gray-50">
-        <div className="container mx-auto">
-          <div className="max-w-4xl mx-auto text-center">
-            <h2 className="text-3xl md:text-4xl font-bold mb-8 text-black">Ready to Get Involved?</h2>
-            <Card className="border-gray-200">
-              <CardContent className="p-8">
-                <p className="text-lg text-gray-700 leading-relaxed mb-6">
-                  We believe everyone has a place to serve and grow in our church family. 
-                  Whether you're new to faith or have been walking with God for years, 
-                  there's a ministry where you can use your gifts and passions.
-                </p>
-                <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                  <Button size="lg" className="bg-red-600 hover:bg-red-700 text-white">
-                    Contact Us About Ministries
-                  </Button>
-                  <Button size="lg" variant="outline" className="border-red-600 text-red-600 hover:bg-red-50">
-                    Download Ministry Guide
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        </div>
-      </section>
-
-      {/* Ministry Leadership */}
-      <section className="py-16 px-4">
-        <div className="container mx-auto">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold mb-4 text-black">Ministry Leadership</h2>
-            <p className="text-lg text-gray-600">Our dedicated ministry leaders are here to help you get connected</p>
-          </div>
-          
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-4xl mx-auto">
-            <Card className="text-center border-gray-200">
-              <CardHeader>
-                <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-2">
-                  <Users className="h-6 w-6 text-red-600" />
-                </div>
-                <CardTitle className="text-lg text-black">Small Groups</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-gray-600">Tom Wilson</p>
-                <p className="text-sm text-red-600">Director</p>
-              </CardContent>
-            </Card>
-
-            <Card className="text-center border-gray-200">
-              <CardHeader>
-                <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-2">
-                  <Music className="h-6 w-6 text-red-600" />
-                </div>
-                <CardTitle className="text-lg text-black">Worship</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-gray-600">Sarah Johnson</p>
-                <p className="text-sm text-red-600">Worship Pastor</p>
-              </CardContent>
-            </Card>
-
-            <Card className="text-center border-gray-200">
-              <CardHeader>
-                <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-2">
-                  <Baby className="h-6 w-6 text-red-600" />
-                </div>
-                <CardTitle className="text-lg text-black">Children</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-gray-600">Lisa Williams</p>
-                <p className="text-sm text-red-600">Children's Pastor</p>
-              </CardContent>
-            </Card>
-
-            <Card className="text-center border-gray-200">
-              <CardHeader>
-                <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-2">
-                  <Gamepad2 className="h-6 w-6 text-red-600" />
-                </div>
-                <CardTitle className="text-lg text-black">Youth</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-gray-600">Mike Davis</p>
-                <p className="text-sm text-red-600">Youth Pastor</p>
-              </CardContent>
-            </Card>
-          </div>
+        <div className="container mx-auto max-w-4xl text-center">
+          <h2 className="text-3xl md:text-4xl font-bold mb-8 text-black">Ready to Get Involved?</h2>
+          <Card className="border-gray-200">
+            <CardContent className="p-8">
+              <p className="text-lg text-gray-700 leading-relaxed mb-6">
+                Every member of Global Power Church has a God-given gift and a place to serve. 
+                Contact Bishop Paul Ndolo Mulu or reach out via WhatsApp to find the right ministry for you.
+              </p>
+              <a href={WHATSAPP_LINK} target="_blank" rel="noopener noreferrer">
+                <Button size="lg" className="bg-red-600 hover:bg-red-700 text-white">
+                  Contact Us on WhatsApp
+                </Button>
+              </a>
+            </CardContent>
+          </Card>
         </div>
       </section>
     </div>

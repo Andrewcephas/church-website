@@ -2,6 +2,7 @@
 import { Toaster } from "@/components/ui/toaster";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import Navigation from "@/components/Navigation";
+import Footer from "@/components/Footer";
 import Index from "@/pages/Index";
 import About from "@/pages/About";
 import OurStory from "@/pages/OurStory";
@@ -18,9 +19,9 @@ import NotFound from "@/pages/NotFound";
 function App() {
   return (
     <Router>
-      <div className="min-h-screen bg-background">
+      <div className="min-h-screen bg-background flex flex-col">
         <Navigation />
-        <main>
+        <main className="flex-1">
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/about" element={<About />} />
@@ -36,6 +37,7 @@ function App() {
             <Route path="*" element={<NotFound />} />
           </Routes>
         </main>
+        <Footer />
         <Toaster />
       </div>
     </Router>
