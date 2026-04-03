@@ -32,15 +32,13 @@ const Navigation = () => {
     <nav className="fixed top-0 w-full bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/60 z-50 border-b border-gray-200">
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16">
-          {/* Logo */}
           <Link to="/" className="flex items-center gap-2">
             <div className="w-8 h-8 bg-red-600 rounded-full flex items-center justify-center">
-              <span className="text-white font-bold text-sm">C</span>
+              <span className="text-white font-bold text-sm">G</span>
             </div>
-            <span className="font-bold text-xl text-black">Church Name</span>
+            <span className="font-bold text-xl text-black">Global Power Church</span>
           </Link>
 
-          {/* Desktop Navigation */}
           <div className="hidden md:flex items-center space-x-8">
             {navItems.map((item) => (
               <div key={item.name} className="relative">
@@ -83,14 +81,13 @@ const Navigation = () => {
             ))}
           </div>
 
-          {/* Desktop CTA */}
           <div className="hidden md:flex items-center space-x-4">
-            <Link to="/live">
+            <a href="https://www.youtube.com/@GLOBALPOWERCHURCH" target="_blank" rel="noopener noreferrer">
               <Button variant="outline" size="sm" className="border-red-600 text-red-600 hover:bg-red-50">
                 <Play className="h-4 w-4 mr-2" />
                 Watch Live
               </Button>
-            </Link>
+            </a>
             <Link to="/contact">
               <Button size="sm" className="bg-red-600 hover:bg-red-700 text-white">
                 Visit Us
@@ -98,7 +95,6 @@ const Navigation = () => {
             </Link>
           </div>
 
-          {/* Mobile Menu */}
           <Sheet open={isOpen} onOpenChange={setIsOpen}>
             <SheetTrigger asChild className="md:hidden">
               <Button variant="ghost" size="icon">
@@ -110,9 +106,9 @@ const Navigation = () => {
               <div className="flex flex-col space-y-6 mt-6">
                 <div className="flex items-center gap-2 mb-6">
                   <div className="w-8 h-8 bg-red-600 rounded-full flex items-center justify-center">
-                    <span className="text-white font-bold text-sm">C</span>
+                    <span className="text-white font-bold text-sm">G</span>
                   </div>
-                  <span className="font-bold text-xl text-black">Church Name</span>
+                  <span className="font-bold text-xl text-black">Global Power Church</span>
                 </div>
                 
                 {navItems.map((item) => {
@@ -146,14 +142,14 @@ const Navigation = () => {
                 })}
                 
                 <div className="border-t pt-6 space-y-3">
-                  <Link to="/live" onClick={() => setIsOpen(false)}>
+                  <a href="https://www.youtube.com/@GLOBALPOWERCHURCH" target="_blank" rel="noopener noreferrer" onClick={() => setIsOpen(false)}>
                     <Button variant="outline" className="w-full border-red-600 text-red-600 hover:bg-red-50">
                       <Play className="h-4 w-4 mr-2" />
                       Watch Live
                     </Button>
-                  </Link>
+                  </a>
                   <Link to="/contact" onClick={() => setIsOpen(false)}>
-                    <Button className="w-full bg-red-600 hover:bg-red-700 text-white">
+                    <Button className="w-full bg-red-600 hover:bg-red-700 text-white mt-3">
                       Visit Us
                     </Button>
                   </Link>
