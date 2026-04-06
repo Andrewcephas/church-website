@@ -1,9 +1,8 @@
-
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { Menu, Users, Calendar, Book, Heart, Play, Phone, ChevronDown } from "lucide-react";
+import { Menu, Users, Calendar, Book, Heart, Play, Phone, ChevronDown, ShieldCheck } from "lucide-react";
 
 const Navigation = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -11,10 +10,7 @@ const Navigation = () => {
 
   const navItems = [
     { 
-      name: "About", 
-      href: "/about", 
-      icon: Users,
-      hasDropdown: true,
+      name: "About", href: "/about", icon: Users, hasDropdown: true,
       dropdownItems: [
         { name: "Our Story", href: "/about/our-story" },
         { name: "Mission", href: "/about/mission" },
@@ -29,40 +25,27 @@ const Navigation = () => {
   ];
 
   return (
-    <nav className="fixed top-0 w-full bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/60 z-50 border-b border-gray-200">
+    <nav className="fixed top-0 w-full bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 z-50 border-b border-border">
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16">
           <Link to="/" className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-red-600 rounded-full flex items-center justify-center">
-              <span className="text-white font-bold text-sm">G</span>
-            </div>
-            <span className="font-bold text-xl text-black">Global Power Church</span>
+            <img src="/images/gpc-logo.jpg" alt="GPC Logo" className="w-10 h-10 rounded-full object-cover" />
+            <span className="font-bold text-xl text-foreground">Global Power Church</span>
           </Link>
 
           <div className="hidden md:flex items-center space-x-8">
             {navItems.map((item) => (
               <div key={item.name} className="relative">
                 {item.hasDropdown ? (
-                  <div 
-                    className="relative"
-                    onMouseEnter={() => setShowAboutDropdown(true)}
-                    onMouseLeave={() => setShowAboutDropdown(false)}
-                  >
-                    <Link
-                      to={item.href}
-                      className="flex items-center gap-1 text-sm font-medium text-black hover:text-red-600 transition-colors"
-                    >
+                  <div className="relative" onMouseEnter={() => setShowAboutDropdown(true)} onMouseLeave={() => setShowAboutDropdown(false)}>
+                    <Link to={item.href} className="flex items-center gap-1 text-sm font-medium text-foreground hover:text-primary transition-colors">
                       {item.name}
                       <ChevronDown className="h-4 w-4" />
                     </Link>
                     {showAboutDropdown && (
-                      <div className="absolute top-full left-0 mt-1 w-48 bg-white rounded-md shadow-lg border border-gray-200">
+                      <div className="absolute top-full left-0 mt-1 w-48 bg-popover rounded-md shadow-lg border border-border">
                         {item.dropdownItems?.map((dropdownItem) => (
-                          <Link
-                            key={dropdownItem.name}
-                            to={dropdownItem.href}
-                            className="block px-4 py-2 text-sm text-black hover:bg-red-50 hover:text-red-600 transition-colors"
-                          >
+                          <Link key={dropdownItem.name} to={dropdownItem.href} className="block px-4 py-2 text-sm text-popover-foreground hover:bg-primary/10 hover:text-primary transition-colors">
                             {dropdownItem.name}
                           </Link>
                         ))}
@@ -70,10 +53,7 @@ const Navigation = () => {
                     )}
                   </div>
                 ) : (
-                  <Link
-                    to={item.href}
-                    className="text-sm font-medium text-black hover:text-red-600 transition-colors"
-                  >
+                  <Link to={item.href} className="text-sm font-medium text-foreground hover:text-primary transition-colors">
                     {item.name}
                   </Link>
                 )}
@@ -83,55 +63,38 @@ const Navigation = () => {
 
           <div className="hidden md:flex items-center space-x-4">
             <a href="https://www.youtube.com/@GLOBALPOWERCHURCH" target="_blank" rel="noopener noreferrer">
-              <Button variant="outline" size="sm" className="border-red-600 text-red-600 hover:bg-red-50">
-                <Play className="h-4 w-4 mr-2" />
-                Watch Live
+              <Button variant="outline" size="sm" className="border-primary text-primary hover:bg-primary/10">
+                <Play className="h-4 w-4 mr-2" />Watch Live
               </Button>
             </a>
-            <Link to="/contact">
-              <Button size="sm" className="bg-red-600 hover:bg-red-700 text-white">
-                Visit Us
+            <Link to="/login">
+              <Button size="sm" className="bg-primary hover:bg-primary/90 text-primary-foreground">
+                <ShieldCheck className="h-4 w-4 mr-2" />Admin
               </Button>
             </Link>
           </div>
 
           <Sheet open={isOpen} onOpenChange={setIsOpen}>
             <SheetTrigger asChild className="md:hidden">
-              <Button variant="ghost" size="icon">
-                <Menu className="h-6 w-6" />
-                <span className="sr-only">Toggle menu</span>
-              </Button>
+              <Button variant="ghost" size="icon"><Menu className="h-6 w-6" /></Button>
             </SheetTrigger>
-            <SheetContent side="right" className="w-80 bg-white">
+            <SheetContent side="right" className="w-80 bg-background">
               <div className="flex flex-col space-y-6 mt-6">
                 <div className="flex items-center gap-2 mb-6">
-                  <div className="w-8 h-8 bg-red-600 rounded-full flex items-center justify-center">
-                    <span className="text-white font-bold text-sm">G</span>
-                  </div>
-                  <span className="font-bold text-xl text-black">Global Power Church</span>
+                  <img src="/images/gpc-logo.jpg" alt="GPC Logo" className="w-10 h-10 rounded-full object-cover" />
+                  <span className="font-bold text-xl text-foreground">Global Power Church</span>
                 </div>
-                
                 {navItems.map((item) => {
                   const Icon = item.icon;
                   return (
                     <div key={item.name}>
-                      <Link
-                        to={item.href}
-                        className="flex items-center gap-3 text-lg font-medium text-black hover:text-red-600 transition-colors"
-                        onClick={() => setIsOpen(false)}
-                      >
-                        <Icon className="h-5 w-5" />
-                        {item.name}
+                      <Link to={item.href} className="flex items-center gap-3 text-lg font-medium text-foreground hover:text-primary transition-colors" onClick={() => setIsOpen(false)}>
+                        <Icon className="h-5 w-5" />{item.name}
                       </Link>
                       {item.hasDropdown && (
                         <div className="ml-8 mt-2 space-y-2">
                           {item.dropdownItems?.map((dropdownItem) => (
-                            <Link
-                              key={dropdownItem.name}
-                              to={dropdownItem.href}
-                              className="block text-sm text-gray-600 hover:text-red-600 transition-colors"
-                              onClick={() => setIsOpen(false)}
-                            >
+                            <Link key={dropdownItem.name} to={dropdownItem.href} className="block text-sm text-muted-foreground hover:text-primary transition-colors" onClick={() => setIsOpen(false)}>
                               {dropdownItem.name}
                             </Link>
                           ))}
@@ -140,17 +103,15 @@ const Navigation = () => {
                     </div>
                   );
                 })}
-                
-                <div className="border-t pt-6 space-y-3">
+                <div className="border-t border-border pt-6 space-y-3">
                   <a href="https://www.youtube.com/@GLOBALPOWERCHURCH" target="_blank" rel="noopener noreferrer" onClick={() => setIsOpen(false)}>
-                    <Button variant="outline" className="w-full border-red-600 text-red-600 hover:bg-red-50">
-                      <Play className="h-4 w-4 mr-2" />
-                      Watch Live
+                    <Button variant="outline" className="w-full border-primary text-primary hover:bg-primary/10">
+                      <Play className="h-4 w-4 mr-2" />Watch Live
                     </Button>
                   </a>
-                  <Link to="/contact" onClick={() => setIsOpen(false)}>
-                    <Button className="w-full bg-red-600 hover:bg-red-700 text-white mt-3">
-                      Visit Us
+                  <Link to="/login" onClick={() => setIsOpen(false)}>
+                    <Button className="w-full bg-primary hover:bg-primary/90 text-primary-foreground mt-3">
+                      <ShieldCheck className="h-4 w-4 mr-2" />Admin Login
                     </Button>
                   </Link>
                 </div>
