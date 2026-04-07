@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -7,43 +7,54 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Search, Download, Edit, Trash2 } from "lucide-react";
+import { Plus, Search, Download, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
-interface Member {
-  id: string; name: string; phone: string; email: string; gender: string; department: string; joinDate: string;
-}
+const departments = ["Choir", "Praise & Worship", "Dance", "Youth", "Women", "Men", "Hospitality", "Crusades"];
 
 const Members = () => {
-  const [members, setMembers] = useState<Member[]>([]);
+  const [members, setMembers] = useState<any[]>([]);
   const [search, setSearch] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [form, setForm] = useState({ name: "", phone: "", email: "", gender: "", department: "" });
   const { toast } = useToast();
 
-  const departments = ["Choir", "Praise & Worship", "Dance", "Youth", "Women", "Men", "Hospitality", "Crusades"];
+  const fetchMembers = async () => {
+    const { data, error } = await supabase.from("members").select("*").order("created_at", { ascending: false });
+    if (!error && data) setMembers(data);
+    setLoading(false);
+  };
 
-  const handleAdd = () => {
+  useEffect(() => { fetchMembers(); }, []);
+
+  const handleAdd = async () => {
     if (!form.name || !form.phone) { toast({ title: "Name and phone are required", variant: "destructive" }); return; }
-    setMembers([...members, { ...form, id: crypto.randomUUID(), joinDate: new Date().toISOString().split("T")[0] }]);
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+    const { error } = await supabase.from("members").insert({ ...form, user_id: user.id, join_date: new Date().toISOString().split("T")[0] });
+    if (error) { toast({ title: "Error adding member", description: error.message, variant: "destructive" }); return; }
     setForm({ name: "", phone: "", email: "", gender: "", department: "" });
     setDialogOpen(false);
     toast({ title: "Member added successfully" });
+    fetchMembers();
   };
 
-  const handleDelete = (id: string) => {
-    setMembers(members.filter(m => m.id !== id));
+  const handleDelete = async (id: string) => {
+    await supabase.from("members").delete().eq("id", id);
     toast({ title: "Member removed" });
+    fetchMembers();
   };
 
   const handleExport = () => {
-    const csv = "Name,Phone,Email,Gender,Department,Join Date\n" + members.map(m => `${m.name},${m.phone},${m.email},${m.gender},${m.department},${m.joinDate}`).join("\n");
+    const csv = "Name,Phone,Email,Gender,Department,Join Date\n" + members.map(m => `${m.name},${m.phone},${m.email || ""},${m.gender || ""},${m.department || ""},${m.join_date || ""}`).join("\n");
     const blob = new Blob([csv], { type: "text/csv" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a"); a.href = url; a.download = "members.csv"; a.click();
   };
 
-  const filtered = members.filter(m => m.name.toLowerCase().includes(search.toLowerCase()) || m.department.toLowerCase().includes(search.toLowerCase()));
+  const filtered = members.filter(m => m.name.toLowerCase().includes(search.toLowerCase()) || (m.department || "").toLowerCase().includes(search.toLowerCase()));
 
   return (
     <div className="space-y-6">
@@ -53,9 +64,7 @@ const Members = () => {
           <Input placeholder="Search members..." value={search} onChange={e => setSearch(e.target.value)} className="pl-10" />
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" onClick={handleExport} disabled={!members.length}>
-            <Download className="h-4 w-4 mr-2" />Export
-          </Button>
+          <Button variant="outline" onClick={handleExport} disabled={!members.length}><Download className="h-4 w-4 mr-2" />Export</Button>
           <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
             <DialogTrigger asChild>
               <Button className="bg-primary hover:bg-primary/90 text-primary-foreground"><Plus className="h-4 w-4 mr-2" />Add Member</Button>
@@ -84,21 +93,15 @@ const Members = () => {
           </Dialog>
         </div>
       </div>
-
       <Card>
         <CardHeader><CardTitle>Members ({filtered.length})</CardTitle></CardHeader>
         <CardContent>
-          {filtered.length === 0 ? (
+          {loading ? <p className="text-center text-muted-foreground py-8">Loading...</p> : filtered.length === 0 ? (
             <p className="text-center text-muted-foreground py-8">No members yet. Click "Add Member" to get started.</p>
           ) : (
             <div className="overflow-x-auto">
               <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Name</TableHead><TableHead>Phone</TableHead><TableHead>Email</TableHead>
-                    <TableHead>Gender</TableHead><TableHead>Department</TableHead><TableHead>Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
+                <TableHeader><TableRow><TableHead>Name</TableHead><TableHead>Phone</TableHead><TableHead>Email</TableHead><TableHead>Gender</TableHead><TableHead>Department</TableHead><TableHead>Actions</TableHead></TableRow></TableHeader>
                 <TableBody>
                   {filtered.map(m => (
                     <TableRow key={m.id}>
@@ -107,9 +110,7 @@ const Members = () => {
                       <TableCell>{m.email || "—"}</TableCell>
                       <TableCell>{m.gender || "—"}</TableCell>
                       <TableCell><Badge variant="secondary">{m.department || "Unassigned"}</Badge></TableCell>
-                      <TableCell>
-                        <Button variant="ghost" size="icon" onClick={() => handleDelete(m.id)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
-                      </TableCell>
+                      <TableCell><Button variant="ghost" size="icon" onClick={() => handleDelete(m.id)}><Trash2 className="h-4 w-4 text-destructive" /></Button></TableCell>
                     </TableRow>
                   ))}
                 </TableBody>

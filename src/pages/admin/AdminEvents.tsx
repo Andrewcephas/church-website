@@ -1,29 +1,46 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
-import { Plus, Calendar } from "lucide-react";
+import { Plus, Calendar, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-
-interface Event { id: string; title: string; date: string; time: string; description: string; }
+import { supabase } from "@/integrations/supabase/client";
 
 const AdminEvents = () => {
-  const [events, setEvents] = useState<Event[]>([]);
+  const [events, setEvents] = useState<any[]>([]);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [form, setForm] = useState({ title: "", date: "", time: "", description: "" });
   const { toast } = useToast();
 
-  const handleAdd = () => {
+  const fetchEvents = async () => {
+    const { data } = await supabase.from("events").select("*").order("date", { ascending: false });
+    if (data) setEvents(data);
+    setLoading(false);
+  };
+
+  useEffect(() => { fetchEvents(); }, []);
+
+  const handleAdd = async () => {
     if (!form.title || !form.date) { toast({ title: "Title and date required", variant: "destructive" }); return; }
-    setEvents([...events, { ...form, id: crypto.randomUUID() }]);
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+    const { error } = await supabase.from("events").insert({ ...form, user_id: user.id });
+    if (error) { toast({ title: "Error", description: error.message, variant: "destructive" }); return; }
     setForm({ title: "", date: "", time: "", description: "" });
     setDialogOpen(false);
     toast({ title: "Event created" });
+    fetchEvents();
+  };
+
+  const handleDelete = async (id: string) => {
+    await supabase.from("events").delete().eq("id", id);
+    toast({ title: "Event deleted" });
+    fetchEvents();
   };
 
   return (
@@ -47,9 +64,9 @@ const AdminEvents = () => {
       <Card>
         <CardHeader><CardTitle className="flex items-center gap-2"><Calendar className="h-5 w-5 text-primary" />Events</CardTitle></CardHeader>
         <CardContent>
-          {events.length === 0 ? <p className="text-center text-muted-foreground py-8">No events yet.</p> : (
-            <Table><TableHeader><TableRow><TableHead>Date</TableHead><TableHead>Title</TableHead><TableHead>Time</TableHead><TableHead>Description</TableHead></TableRow></TableHeader>
-              <TableBody>{events.map(e => (<TableRow key={e.id}><TableCell>{e.date}</TableCell><TableCell className="font-medium">{e.title}</TableCell><TableCell>{e.time || "—"}</TableCell><TableCell className="text-muted-foreground">{e.description || "—"}</TableCell></TableRow>))}</TableBody>
+          {loading ? <p className="text-center text-muted-foreground py-8">Loading...</p> : events.length === 0 ? <p className="text-center text-muted-foreground py-8">No events yet.</p> : (
+            <Table><TableHeader><TableRow><TableHead>Date</TableHead><TableHead>Title</TableHead><TableHead>Time</TableHead><TableHead>Description</TableHead><TableHead>Actions</TableHead></TableRow></TableHeader>
+              <TableBody>{events.map(e => (<TableRow key={e.id}><TableCell>{e.date}</TableCell><TableCell className="font-medium">{e.title}</TableCell><TableCell>{e.time || "—"}</TableCell><TableCell className="text-muted-foreground">{e.description || "—"}</TableCell><TableCell><Button variant="ghost" size="icon" onClick={() => handleDelete(e.id)}><Trash2 className="h-4 w-4 text-destructive" /></Button></TableCell></TableRow>))}</TableBody>
             </Table>
           )}
         </CardContent>

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,25 +9,35 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Plus, ClipboardCheck } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
-interface AttendanceRecord {
-  id: string; service: string; date: string; count: number; notes: string;
-}
+const services = ["Sunday Service", "Thursday Prayers", "Friday Kesha", "Saturday Devotion", "Special Event"];
 
 const Attendance = () => {
-  const [records, setRecords] = useState<AttendanceRecord[]>([]);
+  const [records, setRecords] = useState<any[]>([]);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [form, setForm] = useState({ service: "", date: "", count: "", notes: "" });
   const { toast } = useToast();
 
-  const services = ["Sunday Service", "Thursday Prayers", "Friday Kesha", "Saturday Devotion", "Special Event"];
+  const fetchRecords = async () => {
+    const { data } = await supabase.from("attendance").select("*").order("date", { ascending: false });
+    if (data) setRecords(data);
+    setLoading(false);
+  };
 
-  const handleAdd = () => {
+  useEffect(() => { fetchRecords(); }, []);
+
+  const handleAdd = async () => {
     if (!form.service || !form.date || !form.count) { toast({ title: "Fill required fields", variant: "destructive" }); return; }
-    setRecords([...records, { ...form, count: parseInt(form.count), id: crypto.randomUUID() }]);
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+    const { error } = await supabase.from("attendance").insert({ service: form.service, date: form.date, count: parseInt(form.count), notes: form.notes, user_id: user.id });
+    if (error) { toast({ title: "Error", description: error.message, variant: "destructive" }); return; }
     setForm({ service: "", date: "", count: "", notes: "" });
     setDialogOpen(false);
     toast({ title: "Attendance recorded" });
+    fetchRecords();
   };
 
   return (
@@ -38,9 +48,7 @@ const Attendance = () => {
           <p className="text-muted-foreground text-sm">Track attendance for each service</p>
         </div>
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-          <DialogTrigger asChild>
-            <Button className="bg-primary hover:bg-primary/90 text-primary-foreground"><Plus className="h-4 w-4 mr-2" />Record Attendance</Button>
-          </DialogTrigger>
+          <DialogTrigger asChild><Button className="bg-primary hover:bg-primary/90 text-primary-foreground"><Plus className="h-4 w-4 mr-2" />Record Attendance</Button></DialogTrigger>
           <DialogContent>
             <DialogHeader><DialogTitle>Record Attendance</DialogTitle></DialogHeader>
             <div className="space-y-4">
@@ -58,19 +66,16 @@ const Attendance = () => {
           </DialogContent>
         </Dialog>
       </div>
-
       <Card>
         <CardHeader><CardTitle className="flex items-center gap-2"><ClipboardCheck className="h-5 w-5 text-primary" />Attendance History</CardTitle></CardHeader>
         <CardContent>
-          {records.length === 0 ? (
-            <p className="text-center text-muted-foreground py-8">No attendance records. Click "Record Attendance" to start.</p>
+          {loading ? <p className="text-center text-muted-foreground py-8">Loading...</p> : records.length === 0 ? (
+            <p className="text-center text-muted-foreground py-8">No attendance records yet.</p>
           ) : (
             <Table>
-              <TableHeader>
-                <TableRow><TableHead>Date</TableHead><TableHead>Service</TableHead><TableHead>Count</TableHead><TableHead>Notes</TableHead></TableRow>
-              </TableHeader>
+              <TableHeader><TableRow><TableHead>Date</TableHead><TableHead>Service</TableHead><TableHead>Count</TableHead><TableHead>Notes</TableHead></TableRow></TableHeader>
               <TableBody>
-                {records.sort((a, b) => b.date.localeCompare(a.date)).map(r => (
+                {records.map(r => (
                   <TableRow key={r.id}>
                     <TableCell>{r.date}</TableCell>
                     <TableCell><Badge variant="secondary">{r.service}</Badge></TableCell>
