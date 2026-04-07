@@ -6,15 +6,21 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Heart } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 const PrayerRequestForm = () => {
   const [form, setForm] = useState({ name: "", email: "", request: "" });
+  const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const { toast } = useToast();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.name || !form.request) { toast({ title: "Name and prayer request are required", variant: "destructive" }); return; }
+    setSubmitting(true);
+    const { error } = await supabase.from("prayer_requests").insert({ name: form.name, email: form.email || null, request: form.request });
+    setSubmitting(false);
+    if (error) { toast({ title: "Error submitting", description: error.message, variant: "destructive" }); return; }
     setSubmitted(true);
     toast({ title: "Prayer request submitted", description: "Our prayer team will pray for you." });
   };
@@ -53,7 +59,9 @@ const PrayerRequestForm = () => {
                 <div><Label>Your Name *</Label><Input value={form.name} onChange={e => setForm({...form, name: e.target.value})} required /></div>
                 <div><Label>Email (optional)</Label><Input type="email" value={form.email} onChange={e => setForm({...form, email: e.target.value})} /></div>
                 <div><Label>Prayer Request *</Label><Textarea value={form.request} onChange={e => setForm({...form, request: e.target.value})} rows={5} required placeholder="Share your prayer need..." /></div>
-                <Button type="submit" className="w-full bg-primary hover:bg-primary/90 text-primary-foreground">Submit Prayer Request</Button>
+                <Button type="submit" className="w-full bg-primary hover:bg-primary/90 text-primary-foreground" disabled={submitting}>
+                  {submitting ? "Submitting..." : "Submit Prayer Request"}
+                </Button>
               </form>
             </CardContent>
           </Card>
