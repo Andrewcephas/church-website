@@ -1,21 +1,35 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { MessageSquare, Send } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 const Communications = () => {
   const [message, setMessage] = useState("");
-  const [history, setHistory] = useState<{ id: string; message: string; date: string }[]>([]);
+  const [history, setHistory] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
   const { toast } = useToast();
 
-  const handleSend = () => {
+  const fetchHistory = async () => {
+    const { data } = await supabase.from("communications").select("*").order("created_at", { ascending: false });
+    if (data) setHistory(data);
+    setLoading(false);
+  };
+
+  useEffect(() => { fetchHistory(); }, []);
+
+  const handleSend = async () => {
     if (!message.trim()) return;
-    setHistory([{ id: crypto.randomUUID(), message, date: new Date().toLocaleString() }, ...history]);
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+    const { error } = await supabase.from("communications").insert({ message, user_id: user.id });
+    if (error) { toast({ title: "Error", description: error.message, variant: "destructive" }); return; }
     setMessage("");
-    toast({ title: "Announcement saved", description: "In a full setup, this would send SMS/email to members." });
+    toast({ title: "Announcement saved" });
+    fetchHistory();
   };
 
   return (
@@ -31,11 +45,11 @@ const Communications = () => {
       <Card>
         <CardHeader><CardTitle>Announcement History</CardTitle></CardHeader>
         <CardContent>
-          {history.length === 0 ? <p className="text-muted-foreground text-center py-4">No announcements sent yet.</p> : (
+          {loading ? <p className="text-muted-foreground text-center py-4">Loading...</p> : history.length === 0 ? <p className="text-muted-foreground text-center py-4">No announcements sent yet.</p> : (
             <div className="space-y-3">{history.map(h => (
               <div key={h.id} className="p-3 bg-muted rounded-md">
                 <p className="text-sm text-foreground">{h.message}</p>
-                <p className="text-xs text-muted-foreground mt-1">{h.date}</p>
+                <p className="text-xs text-muted-foreground mt-1">{new Date(h.created_at).toLocaleString()}</p>
               </div>
             ))}</div>
           )}

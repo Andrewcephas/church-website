@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,32 +9,42 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Plus, DollarSign, Download } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
-interface FinanceRecord {
-  id: string; type: string; amount: number; date: string; giver: string; method: string; notes: string;
-}
+const types = ["Tithe", "Offering", "Donation", "Seed", "Building Fund", "Mission Support"];
+const methods = ["Cash", "M-Pesa", "Bank Transfer", "WhatsApp"];
 
 const Finance = () => {
-  const [records, setRecords] = useState<FinanceRecord[]>([]);
+  const [records, setRecords] = useState<any[]>([]);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [form, setForm] = useState({ type: "", amount: "", date: "", giver: "", method: "", notes: "" });
   const { toast } = useToast();
 
-  const types = ["Tithe", "Offering", "Donation", "Seed", "Building Fund", "Mission Support"];
-  const methods = ["Cash", "M-Pesa", "Bank Transfer", "WhatsApp"];
+  const fetchRecords = async () => {
+    const { data } = await supabase.from("finance").select("*").order("date", { ascending: false });
+    if (data) setRecords(data);
+    setLoading(false);
+  };
 
-  const handleAdd = () => {
+  useEffect(() => { fetchRecords(); }, []);
+
+  const handleAdd = async () => {
     if (!form.type || !form.amount || !form.date) { toast({ title: "Fill required fields", variant: "destructive" }); return; }
-    setRecords([...records, { ...form, amount: parseFloat(form.amount), id: crypto.randomUUID() }]);
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+    const { error } = await supabase.from("finance").insert({ type: form.type, amount: parseFloat(form.amount), date: form.date, giver: form.giver, method: form.method, notes: form.notes, user_id: user.id });
+    if (error) { toast({ title: "Error", description: error.message, variant: "destructive" }); return; }
     setForm({ type: "", amount: "", date: "", giver: "", method: "", notes: "" });
     setDialogOpen(false);
     toast({ title: "Finance record added" });
+    fetchRecords();
   };
 
-  const total = records.reduce((sum, r) => sum + r.amount, 0);
+  const total = records.reduce((sum, r) => sum + Number(r.amount), 0);
 
   const handleExport = () => {
-    const csv = "Date,Type,Giver,Amount,Method,Notes\n" + records.map(r => `${r.date},${r.type},${r.giver},${r.amount},${r.method},${r.notes}`).join("\n");
+    const csv = "Date,Type,Giver,Amount,Method,Notes\n" + records.map(r => `${r.date},${r.type},${r.giver || ""},${r.amount},${r.method || ""},${r.notes || ""}`).join("\n");
     const blob = new Blob([csv], { type: "text/csv" });
     const url = URL.createObjectURL(blob); const a = document.createElement("a"); a.href = url; a.download = "finance.csv"; a.click();
   };
@@ -49,9 +59,7 @@ const Finance = () => {
         <div className="flex gap-2">
           <Button variant="outline" onClick={handleExport} disabled={!records.length}><Download className="h-4 w-4 mr-2" />Export</Button>
           <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-            <DialogTrigger asChild>
-              <Button className="bg-primary hover:bg-primary/90 text-primary-foreground"><Plus className="h-4 w-4 mr-2" />Add Record</Button>
-            </DialogTrigger>
+            <DialogTrigger asChild><Button className="bg-primary hover:bg-primary/90 text-primary-foreground"><Plus className="h-4 w-4 mr-2" />Add Record</Button></DialogTrigger>
             <DialogContent>
               <DialogHeader><DialogTitle>Add Finance Record</DialogTitle></DialogHeader>
               <div className="space-y-4">
@@ -77,24 +85,21 @@ const Finance = () => {
           </Dialog>
         </div>
       </div>
-
       <Card>
         <CardHeader><CardTitle className="flex items-center gap-2"><DollarSign className="h-5 w-5 text-primary" />Total: KES {total.toLocaleString()}</CardTitle></CardHeader>
         <CardContent>
-          {records.length === 0 ? (
+          {loading ? <p className="text-center text-muted-foreground py-8">Loading...</p> : records.length === 0 ? (
             <p className="text-center text-muted-foreground py-8">No finance records yet.</p>
           ) : (
             <Table>
-              <TableHeader>
-                <TableRow><TableHead>Date</TableHead><TableHead>Type</TableHead><TableHead>Giver</TableHead><TableHead>Amount</TableHead><TableHead>Method</TableHead></TableRow>
-              </TableHeader>
+              <TableHeader><TableRow><TableHead>Date</TableHead><TableHead>Type</TableHead><TableHead>Giver</TableHead><TableHead>Amount</TableHead><TableHead>Method</TableHead></TableRow></TableHeader>
               <TableBody>
-                {records.sort((a, b) => b.date.localeCompare(a.date)).map(r => (
+                {records.map(r => (
                   <TableRow key={r.id}>
                     <TableCell>{r.date}</TableCell>
                     <TableCell><Badge variant="secondary">{r.type}</Badge></TableCell>
                     <TableCell>{r.giver || "Anonymous"}</TableCell>
-                    <TableCell className="font-bold">KES {r.amount.toLocaleString()}</TableCell>
+                    <TableCell className="font-bold">KES {Number(r.amount).toLocaleString()}</TableCell>
                     <TableCell>{r.method || "—"}</TableCell>
                   </TableRow>
                 ))}

@@ -14,7 +14,243 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      attendance: {
+        Row: {
+          count: number
+          created_at: string | null
+          date: string
+          id: string
+          notes: string | null
+          service: string
+          user_id: string
+        }
+        Insert: {
+          count: number
+          created_at?: string | null
+          date: string
+          id?: string
+          notes?: string | null
+          service: string
+          user_id: string
+        }
+        Update: {
+          count?: number
+          created_at?: string | null
+          date?: string
+          id?: string
+          notes?: string | null
+          service?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      communications: {
+        Row: {
+          created_at: string | null
+          id: string
+          message: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          message: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          message?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      events: {
+        Row: {
+          created_at: string | null
+          date: string
+          description: string | null
+          id: string
+          time: string | null
+          title: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          date: string
+          description?: string | null
+          id?: string
+          time?: string | null
+          title: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          date?: string
+          description?: string | null
+          id?: string
+          time?: string | null
+          title?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      finance: {
+        Row: {
+          amount: number
+          created_at: string | null
+          date: string
+          giver: string | null
+          id: string
+          method: string | null
+          notes: string | null
+          type: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string | null
+          date: string
+          giver?: string | null
+          id?: string
+          method?: string | null
+          notes?: string | null
+          type: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string | null
+          date?: string
+          giver?: string | null
+          id?: string
+          method?: string | null
+          notes?: string | null
+          type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      members: {
+        Row: {
+          created_at: string | null
+          department: string | null
+          email: string | null
+          gender: string | null
+          id: string
+          join_date: string | null
+          name: string
+          phone: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          department?: string | null
+          email?: string | null
+          gender?: string | null
+          id?: string
+          join_date?: string | null
+          name: string
+          phone: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          department?: string | null
+          email?: string | null
+          gender?: string | null
+          id?: string
+          join_date?: string | null
+          name?: string
+          phone?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      prayer_requests: {
+        Row: {
+          created_at: string | null
+          email: string | null
+          id: string
+          name: string
+          request: string
+          status: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          email?: string | null
+          id?: string
+          name: string
+          request: string
+          status?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          email?: string | null
+          id?: string
+          name?: string
+          request?: string
+          status?: string | null
+        }
+        Relationships: []
+      }
+      sermons: {
+        Row: {
+          created_at: string | null
+          date: string
+          id: string
+          speaker: string | null
+          title: string
+          topic: string | null
+          user_id: string
+          video_url: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          date: string
+          id?: string
+          speaker?: string | null
+          title: string
+          topic?: string | null
+          user_id: string
+          video_url?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          date?: string
+          id?: string
+          speaker?: string | null
+          title?: string
+          topic?: string | null
+          user_id?: string
+          video_url?: string | null
+        }
+        Relationships: []
+      }
+      site_settings: {
+        Row: {
+          id: string
+          key: string
+          updated_at: string | null
+          value: Json
+        }
+        Insert: {
+          id?: string
+          key: string
+          updated_at?: string | null
+          value?: Json
+        }
+        Update: {
+          id?: string
+          key?: string
+          updated_at?: string | null
+          value?: Json
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
