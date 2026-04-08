@@ -26,12 +26,13 @@ import Communications from "@/pages/admin/Communications";
 import PrayerRequests from "@/pages/admin/PrayerRequests";
 import Analytics from "@/pages/admin/Analytics";
 import PrayerRequestForm from "@/pages/PrayerRequestForm";
+import Settings from "@/pages/admin/Settings";
+import SocialQuotes from "@/pages/admin/SocialQuotes";
 
 function App() {
   return (
     <Router>
       <Routes>
-        {/* Public routes with nav/footer */}
         <Route path="/" element={<PublicLayout><Index /></PublicLayout>} />
         <Route path="/about" element={<PublicLayout><About /></PublicLayout>} />
         <Route path="/about/our-story" element={<PublicLayout><OurStory /></PublicLayout>} />
@@ -46,7 +47,6 @@ function App() {
         <Route path="/prayer-request" element={<PublicLayout><PrayerRequestForm /></PublicLayout>} />
         <Route path="/login" element={<Login />} />
 
-        {/* Admin routes */}
         <Route path="/admin" element={<AdminLayout />}>
           <Route index element={<Dashboard />} />
           <Route path="members" element={<Members />} />
@@ -57,6 +57,8 @@ function App() {
           <Route path="communications" element={<Communications />} />
           <Route path="prayer-requests" element={<PrayerRequests />} />
           <Route path="analytics" element={<Analytics />} />
+          <Route path="settings" element={<Settings />} />
+          <Route path="social-quotes" element={<SocialQuotes />} />
         </Route>
 
         <Route path="*" element={<PublicLayout><NotFound /></PublicLayout>} />

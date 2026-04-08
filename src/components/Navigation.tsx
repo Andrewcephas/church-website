@@ -1,15 +1,19 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Menu, Users, Calendar, Book, Heart, Play, Phone, ChevronDown, ShieldCheck } from "lucide-react";
+import { useSiteSettings } from "@/hooks/use-site-settings";
 
 const Navigation = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [showAboutDropdown, setShowAboutDropdown] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+  const timeoutRef = useRef<NodeJS.Timeout>();
+  const { settings } = useSiteSettings();
 
   const navItems = [
-    { 
+    {
       name: "About", href: "/about", icon: Users, hasDropdown: true,
       dropdownItems: [
         { name: "Our Story", href: "/about/our-story" },
@@ -24,12 +28,25 @@ const Navigation = () => {
     { name: "Contact", href: "/contact", icon: Phone },
   ];
 
+  const handleMouseEnter = () => {
+    if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    setShowAboutDropdown(true);
+  };
+
+  const handleMouseLeave = () => {
+    timeoutRef.current = setTimeout(() => setShowAboutDropdown(false), 200);
+  };
+
+  useEffect(() => {
+    return () => { if (timeoutRef.current) clearTimeout(timeoutRef.current); };
+  }, []);
+
   return (
     <nav className="fixed top-0 w-full bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 z-50 border-b border-border">
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16">
           <Link to="/" className="flex items-center gap-2">
-            <img src="/images/gpc-logo.jpg" alt="GPC Logo" className="w-10 h-10 rounded-full object-cover" />
+            <img src="/images/gpc-logo.png" alt="GPC Logo" className="w-10 h-10 rounded-full object-cover" />
             <span className="font-bold text-xl text-foreground">Global Power Church</span>
           </Link>
 
@@ -37,15 +54,15 @@ const Navigation = () => {
             {navItems.map((item) => (
               <div key={item.name} className="relative">
                 {item.hasDropdown ? (
-                  <div className="relative" onMouseEnter={() => setShowAboutDropdown(true)} onMouseLeave={() => setShowAboutDropdown(false)}>
+                  <div ref={dropdownRef} className="relative" onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave}>
                     <Link to={item.href} className="flex items-center gap-1 text-sm font-medium text-foreground hover:text-primary transition-colors">
                       {item.name}
-                      <ChevronDown className="h-4 w-4" />
+                      <ChevronDown className={`h-4 w-4 transition-transform ${showAboutDropdown ? 'rotate-180' : ''}`} />
                     </Link>
                     {showAboutDropdown && (
-                      <div className="absolute top-full left-0 mt-1 w-48 bg-popover rounded-md shadow-lg border border-border">
+                      <div className="absolute top-full left-0 mt-1 w-48 bg-popover rounded-md shadow-lg border border-border py-1 z-50">
                         {item.dropdownItems?.map((dropdownItem) => (
-                          <Link key={dropdownItem.name} to={dropdownItem.href} className="block px-4 py-2 text-sm text-popover-foreground hover:bg-primary/10 hover:text-primary transition-colors">
+                          <Link key={dropdownItem.name} to={dropdownItem.href} className="block px-4 py-2.5 text-sm text-popover-foreground hover:bg-primary/10 hover:text-primary transition-colors" onClick={() => setShowAboutDropdown(false)}>
                             {dropdownItem.name}
                           </Link>
                         ))}
@@ -62,7 +79,7 @@ const Navigation = () => {
           </div>
 
           <div className="hidden md:flex items-center space-x-4">
-            <a href="https://www.youtube.com/@GLOBALPOWERCHURCH" target="_blank" rel="noopener noreferrer">
+            <a href={settings.youtube_url} target="_blank" rel="noopener noreferrer">
               <Button variant="outline" size="sm" className="border-primary text-primary hover:bg-primary/10">
                 <Play className="h-4 w-4 mr-2" />Watch Live
               </Button>
@@ -81,7 +98,7 @@ const Navigation = () => {
             <SheetContent side="right" className="w-80 bg-background">
               <div className="flex flex-col space-y-6 mt-6">
                 <div className="flex items-center gap-2 mb-6">
-                  <img src="/images/gpc-logo.jpg" alt="GPC Logo" className="w-10 h-10 rounded-full object-cover" />
+                  <img src="/images/gpc-logo.png" alt="GPC Logo" className="w-10 h-10 rounded-full object-cover" />
                   <span className="font-bold text-xl text-foreground">Global Power Church</span>
                 </div>
                 {navItems.map((item) => {
@@ -104,7 +121,7 @@ const Navigation = () => {
                   );
                 })}
                 <div className="border-t border-border pt-6 space-y-3">
-                  <a href="https://www.youtube.com/@GLOBALPOWERCHURCH" target="_blank" rel="noopener noreferrer" onClick={() => setIsOpen(false)}>
+                  <a href={settings.youtube_url} target="_blank" rel="noopener noreferrer" onClick={() => setIsOpen(false)}>
                     <Button variant="outline" className="w-full border-primary text-primary hover:bg-primary/10">
                       <Play className="h-4 w-4 mr-2" />Watch Live
                     </Button>
