@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import {
   LayoutDashboard, Users, ClipboardCheck, DollarSign, Calendar, Book,
-  MessageSquare, Heart, BarChart3, LogOut, Menu, ChevronLeft
+  MessageSquare, Heart, BarChart3, LogOut, Menu, ChevronLeft, Settings, Sparkles
 } from "lucide-react";
 
 const sidebarItems = [
@@ -16,7 +16,9 @@ const sidebarItems = [
   { title: "Sermons", href: "/admin/sermons", icon: Book },
   { title: "Communications", href: "/admin/communications", icon: MessageSquare },
   { title: "Prayer Requests", href: "/admin/prayer-requests", icon: Heart },
+  { title: "Social Quotes", href: "/admin/social-quotes", icon: Sparkles },
   { title: "Analytics", href: "/admin/analytics", icon: BarChart3 },
+  { title: "Settings", href: "/admin/settings", icon: Settings },
 ];
 
 const AdminLayout = () => {
@@ -50,12 +52,11 @@ const AdminLayout = () => {
 
   return (
     <div className="min-h-screen flex bg-muted">
-      {/* Sidebar */}
       <aside className={`${collapsed ? 'w-16' : 'w-64'} bg-sidebar text-sidebar-foreground flex flex-col transition-all duration-200 fixed h-full z-40`}>
         <div className="p-4 flex items-center justify-between border-b border-sidebar-border">
           {!collapsed && (
             <div className="flex items-center gap-2">
-              <img src="/images/gpc-logo.jpg" alt="GPC" className="w-8 h-8 rounded-full" />
+              <img src="/images/gpc-logo.png" alt="GPC" className="w-8 h-8 rounded-full" />
               <span className="font-bold text-sm">GPC Admin</span>
             </div>
           )}
@@ -63,7 +64,7 @@ const AdminLayout = () => {
             {collapsed ? <Menu className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
           </Button>
         </div>
-        <nav className="flex-1 py-4 space-y-1 px-2">
+        <nav className="flex-1 py-4 space-y-1 px-2 overflow-y-auto">
           {sidebarItems.map((item) => {
             const isActive = location.pathname === item.href;
             return (
@@ -81,13 +82,10 @@ const AdminLayout = () => {
             {!collapsed && <span className="ml-2">Logout</span>}
           </Button>
           {!collapsed && (
-            <Link to="/" className="block text-xs text-sidebar-foreground/60 hover:text-sidebar-foreground mt-2 text-center">
-              ← Back to Website
-            </Link>
+            <Link to="/" className="block text-xs text-sidebar-foreground/60 hover:text-sidebar-foreground mt-2 text-center">← Back to Website</Link>
           )}
         </div>
       </aside>
-      {/* Main content */}
       <main className={`flex-1 ${collapsed ? 'ml-16' : 'ml-64'} transition-all duration-200`}>
         <header className="h-14 bg-background border-b border-border flex items-center px-6 sticky top-0 z-30">
           <h1 className="text-lg font-semibold text-foreground">
@@ -95,9 +93,7 @@ const AdminLayout = () => {
           </h1>
           <div className="ml-auto text-sm text-muted-foreground">{user.email}</div>
         </header>
-        <div className="p-6">
-          <Outlet />
-        </div>
+        <div className="p-6"><Outlet /></div>
       </main>
     </div>
   );

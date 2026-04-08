@@ -7,38 +7,55 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Search, Download, Trash2 } from "lucide-react";
+import { Plus, Search, Download, Trash2, Pencil } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 
 const departments = ["Choir", "Praise & Worship", "Dance", "Youth", "Women", "Men", "Hospitality", "Crusades"];
+
+const emptyForm = { name: "", phone: "", email: "", gender: "", department: "" };
 
 const Members = () => {
   const [members, setMembers] = useState<any[]>([]);
   const [search, setSearch] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [form, setForm] = useState({ name: "", phone: "", email: "", gender: "", department: "" });
+  const [form, setForm] = useState(emptyForm);
+  const [editId, setEditId] = useState<string | null>(null);
   const { toast } = useToast();
 
   const fetchMembers = async () => {
-    const { data, error } = await supabase.from("members").select("*").order("created_at", { ascending: false });
-    if (!error && data) setMembers(data);
+    const { data } = await supabase.from("members").select("*").order("created_at", { ascending: false });
+    if (data) setMembers(data);
     setLoading(false);
   };
 
   useEffect(() => { fetchMembers(); }, []);
 
-  const handleAdd = async () => {
+  const handleSave = async () => {
     if (!form.name || !form.phone) { toast({ title: "Name and phone are required", variant: "destructive" }); return; }
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
-    const { error } = await supabase.from("members").insert({ ...form, user_id: user.id, join_date: new Date().toISOString().split("T")[0] });
-    if (error) { toast({ title: "Error adding member", description: error.message, variant: "destructive" }); return; }
-    setForm({ name: "", phone: "", email: "", gender: "", department: "" });
+
+    if (editId) {
+      const { error } = await supabase.from("members").update({ ...form, updated_at: new Date().toISOString() }).eq("id", editId);
+      if (error) { toast({ title: "Error", description: error.message, variant: "destructive" }); return; }
+      toast({ title: "Member updated" });
+    } else {
+      const { error } = await supabase.from("members").insert({ ...form, user_id: user.id, join_date: new Date().toISOString().split("T")[0] });
+      if (error) { toast({ title: "Error", description: error.message, variant: "destructive" }); return; }
+      toast({ title: "Member added" });
+    }
+    setForm(emptyForm);
+    setEditId(null);
     setDialogOpen(false);
-    toast({ title: "Member added successfully" });
     fetchMembers();
+  };
+
+  const handleEdit = (m: any) => {
+    setForm({ name: m.name, phone: m.phone, email: m.email || "", gender: m.gender || "", department: m.department || "" });
+    setEditId(m.id);
+    setDialogOpen(true);
   };
 
   const handleDelete = async (id: string) => {
@@ -54,6 +71,7 @@ const Members = () => {
     const a = document.createElement("a"); a.href = url; a.download = "members.csv"; a.click();
   };
 
+  const openAdd = () => { setForm(emptyForm); setEditId(null); setDialogOpen(true); };
   const filtered = members.filter(m => m.name.toLowerCase().includes(search.toLowerCase()) || (m.department || "").toLowerCase().includes(search.toLowerCase()));
 
   return (
@@ -65,12 +83,10 @@ const Members = () => {
         </div>
         <div className="flex gap-2">
           <Button variant="outline" onClick={handleExport} disabled={!members.length}><Download className="h-4 w-4 mr-2" />Export</Button>
-          <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-            <DialogTrigger asChild>
-              <Button className="bg-primary hover:bg-primary/90 text-primary-foreground"><Plus className="h-4 w-4 mr-2" />Add Member</Button>
-            </DialogTrigger>
+          <Dialog open={dialogOpen} onOpenChange={(open) => { setDialogOpen(open); if (!open) { setEditId(null); setForm(emptyForm); } }}>
+            <DialogTrigger asChild><Button onClick={openAdd} className="bg-primary hover:bg-primary/90 text-primary-foreground"><Plus className="h-4 w-4 mr-2" />Add Member</Button></DialogTrigger>
             <DialogContent>
-              <DialogHeader><DialogTitle>Add New Member</DialogTitle></DialogHeader>
+              <DialogHeader><DialogTitle>{editId ? "Edit Member" : "Add New Member"}</DialogTitle></DialogHeader>
               <div className="space-y-4">
                 <div><Label>Full Name *</Label><Input value={form.name} onChange={e => setForm({...form, name: e.target.value})} /></div>
                 <div><Label>Phone *</Label><Input value={form.phone} onChange={e => setForm({...form, phone: e.target.value})} /></div>
@@ -87,7 +103,7 @@ const Members = () => {
                     <SelectContent>{departments.map(d => <SelectItem key={d} value={d}>{d}</SelectItem>)}</SelectContent>
                   </Select>
                 </div>
-                <Button onClick={handleAdd} className="w-full bg-primary hover:bg-primary/90 text-primary-foreground">Add Member</Button>
+                <Button onClick={handleSave} className="w-full bg-primary hover:bg-primary/90 text-primary-foreground">{editId ? "Update Member" : "Add Member"}</Button>
               </div>
             </DialogContent>
           </Dialog>
@@ -97,11 +113,11 @@ const Members = () => {
         <CardHeader><CardTitle>Members ({filtered.length})</CardTitle></CardHeader>
         <CardContent>
           {loading ? <p className="text-center text-muted-foreground py-8">Loading...</p> : filtered.length === 0 ? (
-            <p className="text-center text-muted-foreground py-8">No members yet. Click "Add Member" to get started.</p>
+            <p className="text-center text-muted-foreground py-8">No members yet.</p>
           ) : (
             <div className="overflow-x-auto">
               <Table>
-                <TableHeader><TableRow><TableHead>Name</TableHead><TableHead>Phone</TableHead><TableHead>Email</TableHead><TableHead>Gender</TableHead><TableHead>Department</TableHead><TableHead>Actions</TableHead></TableRow></TableHeader>
+                <TableHeader><TableRow><TableHead>Name</TableHead><TableHead>Phone</TableHead><TableHead>Email</TableHead><TableHead>Gender</TableHead><TableHead>Department</TableHead><TableHead>Joined</TableHead><TableHead>Actions</TableHead></TableRow></TableHeader>
                 <TableBody>
                   {filtered.map(m => (
                     <TableRow key={m.id}>
@@ -110,7 +126,13 @@ const Members = () => {
                       <TableCell>{m.email || "—"}</TableCell>
                       <TableCell>{m.gender || "—"}</TableCell>
                       <TableCell><Badge variant="secondary">{m.department || "Unassigned"}</Badge></TableCell>
-                      <TableCell><Button variant="ghost" size="icon" onClick={() => handleDelete(m.id)}><Trash2 className="h-4 w-4 text-destructive" /></Button></TableCell>
+                      <TableCell className="text-muted-foreground text-sm">{m.join_date || "—"}</TableCell>
+                      <TableCell>
+                        <div className="flex gap-1">
+                          <Button variant="ghost" size="icon" onClick={() => handleEdit(m)}><Pencil className="h-4 w-4 text-primary" /></Button>
+                          <Button variant="ghost" size="icon" onClick={() => handleDelete(m.id)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
+                        </div>
+                      </TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
