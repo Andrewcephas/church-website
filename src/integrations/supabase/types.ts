@@ -16,6 +16,7 @@ export type Database = {
     Tables: {
       attendance: {
         Row: {
+          branch_id: string | null
           count: number
           created_at: string | null
           date: string
@@ -25,6 +26,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          branch_id?: string | null
           count: number
           created_at?: string | null
           date: string
@@ -34,6 +36,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          branch_id?: string | null
           count?: number
           created_at?: string | null
           date?: string
@@ -42,31 +45,78 @@ export type Database = {
           service?: string
           user_id?: string
         }
+        Relationships: [
+          {
+            foreignKeyName: "attendance_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      branches: {
+        Row: {
+          branch_name: string
+          created_at: string | null
+          id: string
+          location: string | null
+          pastor_name: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          branch_name: string
+          created_at?: string | null
+          id?: string
+          location?: string | null
+          pastor_name?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          branch_name?: string
+          created_at?: string | null
+          id?: string
+          location?: string | null
+          pastor_name?: string | null
+          updated_at?: string | null
+        }
         Relationships: []
       }
       communications: {
         Row: {
+          branch_id: string | null
           created_at: string | null
           id: string
           message: string
           user_id: string
         }
         Insert: {
+          branch_id?: string | null
           created_at?: string | null
           id?: string
           message: string
           user_id: string
         }
         Update: {
+          branch_id?: string | null
           created_at?: string | null
           id?: string
           message?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "communications_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       events: {
         Row: {
+          branch_id: string | null
           created_at: string | null
           date: string
           description: string | null
@@ -76,6 +126,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          branch_id?: string | null
           created_at?: string | null
           date: string
           description?: string | null
@@ -85,6 +136,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          branch_id?: string | null
           created_at?: string | null
           date?: string
           description?: string | null
@@ -93,11 +145,20 @@ export type Database = {
           title?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "events_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       finance: {
         Row: {
           amount: number
+          branch_id: string | null
           created_at: string | null
           date: string
           giver: string | null
@@ -109,6 +170,7 @@ export type Database = {
         }
         Insert: {
           amount: number
+          branch_id?: string | null
           created_at?: string | null
           date: string
           giver?: string | null
@@ -120,6 +182,7 @@ export type Database = {
         }
         Update: {
           amount?: number
+          branch_id?: string | null
           created_at?: string | null
           date?: string
           giver?: string | null
@@ -129,11 +192,21 @@ export type Database = {
           type?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "finance_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       members: {
         Row: {
+          branch_id: string | null
           created_at: string | null
+          date_of_birth: string | null
           department: string | null
           email: string | null
           gender: string | null
@@ -145,7 +218,9 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          branch_id?: string | null
           created_at?: string | null
+          date_of_birth?: string | null
           department?: string | null
           email?: string | null
           gender?: string | null
@@ -157,7 +232,9 @@ export type Database = {
           user_id: string
         }
         Update: {
+          branch_id?: string | null
           created_at?: string | null
+          date_of_birth?: string | null
           department?: string | null
           email?: string | null
           gender?: string | null
@@ -168,7 +245,15 @@ export type Database = {
           updated_at?: string | null
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "members_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       prayer_requests: {
         Row: {
@@ -199,6 +284,7 @@ export type Database = {
       }
       sermons: {
         Row: {
+          branch_id: string | null
           created_at: string | null
           date: string
           id: string
@@ -209,6 +295,7 @@ export type Database = {
           video_url: string | null
         }
         Insert: {
+          branch_id?: string | null
           created_at?: string | null
           date: string
           id?: string
@@ -219,6 +306,7 @@ export type Database = {
           video_url?: string | null
         }
         Update: {
+          branch_id?: string | null
           created_at?: string | null
           date?: string
           id?: string
@@ -228,7 +316,15 @@ export type Database = {
           user_id?: string
           video_url?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "sermons_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       site_settings: {
         Row: {
@@ -251,15 +347,173 @@ export type Database = {
         }
         Relationships: []
       }
+      sunday_school_attendance: {
+        Row: {
+          class_id: string
+          created_at: string | null
+          date: string
+          id: string
+          notes: string | null
+          present_count: number
+          user_id: string
+        }
+        Insert: {
+          class_id: string
+          created_at?: string | null
+          date: string
+          id?: string
+          notes?: string | null
+          present_count?: number
+          user_id: string
+        }
+        Update: {
+          class_id?: string
+          created_at?: string | null
+          date?: string
+          id?: string
+          notes?: string | null
+          present_count?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sunday_school_attendance_class_id_fkey"
+            columns: ["class_id"]
+            isOneToOne: false
+            referencedRelation: "sunday_school_classes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sunday_school_classes: {
+        Row: {
+          age_group: string | null
+          branch_id: string | null
+          class_name: string
+          created_at: string | null
+          id: string
+          teacher_name: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          age_group?: string | null
+          branch_id?: string | null
+          class_name: string
+          created_at?: string | null
+          id?: string
+          teacher_name?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          age_group?: string | null
+          branch_id?: string | null
+          class_name?: string
+          created_at?: string | null
+          id?: string
+          teacher_name?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sunday_school_classes_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sunday_school_members: {
+        Row: {
+          class_id: string
+          created_at: string | null
+          id: string
+          member_id: string
+        }
+        Insert: {
+          class_id: string
+          created_at?: string | null
+          id?: string
+          member_id: string
+        }
+        Update: {
+          class_id?: string
+          created_at?: string | null
+          id?: string
+          member_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sunday_school_members_class_id_fkey"
+            columns: ["class_id"]
+            isOneToOne: false
+            referencedRelation: "sunday_school_classes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sunday_school_members_member_id_fkey"
+            columns: ["member_id"]
+            isOneToOne: false
+            referencedRelation: "members"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_roles: {
+        Row: {
+          branch_id: string | null
+          created_at: string | null
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          branch_id?: string | null
+          created_at?: string | null
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          branch_id?: string | null
+          created_at?: string | null
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_roles_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      can_access_branch: {
+        Args: { _branch_id: string; _user_id: string }
+        Returns: boolean
+      }
+      get_user_branch_id: { Args: { _user_id: string }; Returns: string }
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "super_admin" | "branch_admin"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -386,6 +640,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["super_admin", "branch_admin"],
+    },
   },
 } as const
