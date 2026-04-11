@@ -10,12 +10,16 @@ import { Badge } from "@/components/ui/badge";
 import { Plus, Search, Download, Trash2, Pencil } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { useUserRole, useBranches } from "@/hooks/use-user-role";
+import BranchSelector from "@/components/admin/BranchSelector";
 
 const departments = ["Choir", "Praise & Worship", "Dance", "Youth", "Women", "Men", "Hospitality", "Crusades"];
-
-const emptyForm = { name: "", phone: "", email: "", gender: "", department: "" };
+const emptyForm = { name: "", phone: "", email: "", gender: "", department: "", date_of_birth: "", branch_id: "" };
 
 const Members = () => {
+  const { isSuperAdmin, branchId: userBranch } = useUserRole();
+  const branches = useBranches();
+  const [selectedBranch, setSelectedBranch] = useState("all");
   const [members, setMembers] = useState<any[]>([]);
   const [search, setSearch] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -24,73 +28,76 @@ const Members = () => {
   const [editId, setEditId] = useState<string | null>(null);
   const { toast } = useToast();
 
+  const branchFilter = isSuperAdmin ? (selectedBranch === "all" ? null : selectedBranch) : userBranch;
+
   const fetchMembers = async () => {
-    const { data } = await supabase.from("members").select("*").order("created_at", { ascending: false });
+    let q = supabase.from("members").select("*").order("created_at", { ascending: false });
+    if (branchFilter) q = q.eq("branch_id", branchFilter);
+    const { data } = await q;
     if (data) setMembers(data);
     setLoading(false);
   };
 
-  useEffect(() => { fetchMembers(); }, []);
+  useEffect(() => { fetchMembers(); }, [selectedBranch, userBranch]);
 
   const handleSave = async () => {
     if (!form.name || !form.phone) { toast({ title: "Name and phone are required", variant: "destructive" }); return; }
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
+    const payload: any = { name: form.name, phone: form.phone, email: form.email, gender: form.gender, department: form.department, date_of_birth: form.date_of_birth || null, branch_id: form.branch_id || userBranch || null };
 
     if (editId) {
-      const { error } = await supabase.from("members").update({ ...form, updated_at: new Date().toISOString() }).eq("id", editId);
+      const { error } = await supabase.from("members").update({ ...payload, updated_at: new Date().toISOString() }).eq("id", editId);
       if (error) { toast({ title: "Error", description: error.message, variant: "destructive" }); return; }
       toast({ title: "Member updated" });
     } else {
-      const { error } = await supabase.from("members").insert({ ...form, user_id: user.id, join_date: new Date().toISOString().split("T")[0] });
+      const { error } = await supabase.from("members").insert({ ...payload, user_id: user.id, join_date: new Date().toISOString().split("T")[0] });
       if (error) { toast({ title: "Error", description: error.message, variant: "destructive" }); return; }
       toast({ title: "Member added" });
     }
-    setForm(emptyForm);
-    setEditId(null);
-    setDialogOpen(false);
-    fetchMembers();
+    setForm(emptyForm); setEditId(null); setDialogOpen(false); fetchMembers();
   };
 
   const handleEdit = (m: any) => {
-    setForm({ name: m.name, phone: m.phone, email: m.email || "", gender: m.gender || "", department: m.department || "" });
-    setEditId(m.id);
-    setDialogOpen(true);
+    setForm({ name: m.name, phone: m.phone, email: m.email || "", gender: m.gender || "", department: m.department || "", date_of_birth: m.date_of_birth || "", branch_id: m.branch_id || "" });
+    setEditId(m.id); setDialogOpen(true);
   };
 
   const handleDelete = async (id: string) => {
     await supabase.from("members").delete().eq("id", id);
-    toast({ title: "Member removed" });
-    fetchMembers();
+    toast({ title: "Member removed" }); fetchMembers();
   };
 
   const handleExport = () => {
-    const csv = "Name,Phone,Email,Gender,Department,Join Date\n" + members.map(m => `${m.name},${m.phone},${m.email || ""},${m.gender || ""},${m.department || ""},${m.join_date || ""}`).join("\n");
+    const csv = "Name,Phone,Email,Gender,Department,DOB,Join Date\n" + members.map(m => `${m.name},${m.phone},${m.email || ""},${m.gender || ""},${m.department || ""},${m.date_of_birth || ""},${m.join_date || ""}`).join("\n");
     const blob = new Blob([csv], { type: "text/csv" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a"); a.href = url; a.download = "members.csv"; a.click();
   };
 
-  const openAdd = () => { setForm(emptyForm); setEditId(null); setDialogOpen(true); };
   const filtered = members.filter(m => m.name.toLowerCase().includes(search.toLowerCase()) || (m.department || "").toLowerCase().includes(search.toLowerCase()));
 
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row justify-between gap-4">
-        <div className="relative flex-1 max-w-sm">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input placeholder="Search members..." value={search} onChange={e => setSearch(e.target.value)} className="pl-10" />
+        <div className="flex gap-2 flex-1">
+          <div className="relative flex-1 max-w-sm">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input placeholder="Search members..." value={search} onChange={e => setSearch(e.target.value)} className="pl-10" />
+          </div>
+          {isSuperAdmin && <BranchSelector value={selectedBranch} onChange={setSelectedBranch} />}
         </div>
         <div className="flex gap-2">
           <Button variant="outline" onClick={handleExport} disabled={!members.length}><Download className="h-4 w-4 mr-2" />Export</Button>
           <Dialog open={dialogOpen} onOpenChange={(open) => { setDialogOpen(open); if (!open) { setEditId(null); setForm(emptyForm); } }}>
-            <DialogTrigger asChild><Button onClick={openAdd} className="bg-primary hover:bg-primary/90 text-primary-foreground"><Plus className="h-4 w-4 mr-2" />Add Member</Button></DialogTrigger>
+            <DialogTrigger asChild><Button onClick={() => { setForm(emptyForm); setEditId(null); setDialogOpen(true); }} className="bg-primary hover:bg-primary/90 text-primary-foreground"><Plus className="h-4 w-4 mr-2" />Add Member</Button></DialogTrigger>
             <DialogContent>
               <DialogHeader><DialogTitle>{editId ? "Edit Member" : "Add New Member"}</DialogTitle></DialogHeader>
               <div className="space-y-4">
                 <div><Label>Full Name *</Label><Input value={form.name} onChange={e => setForm({...form, name: e.target.value})} /></div>
                 <div><Label>Phone *</Label><Input value={form.phone} onChange={e => setForm({...form, phone: e.target.value})} /></div>
                 <div><Label>Email</Label><Input type="email" value={form.email} onChange={e => setForm({...form, email: e.target.value})} /></div>
+                <div><Label>Date of Birth</Label><Input type="date" value={form.date_of_birth} onChange={e => setForm({...form, date_of_birth: e.target.value})} /></div>
                 <div><Label>Gender</Label>
                   <Select value={form.gender} onValueChange={v => setForm({...form, gender: v})}>
                     <SelectTrigger><SelectValue placeholder="Select gender" /></SelectTrigger>
@@ -103,6 +110,14 @@ const Members = () => {
                     <SelectContent>{departments.map(d => <SelectItem key={d} value={d}>{d}</SelectItem>)}</SelectContent>
                   </Select>
                 </div>
+                {isSuperAdmin && (
+                  <div><Label>Branch</Label>
+                    <Select value={form.branch_id} onValueChange={v => setForm({...form, branch_id: v})}>
+                      <SelectTrigger><SelectValue placeholder="Select branch" /></SelectTrigger>
+                      <SelectContent>{branches.map(b => <SelectItem key={b.id} value={b.id}>{b.branch_name}</SelectItem>)}</SelectContent>
+                    </Select>
+                  </div>
+                )}
                 <Button onClick={handleSave} className="w-full bg-primary hover:bg-primary/90 text-primary-foreground">{editId ? "Update Member" : "Add Member"}</Button>
               </div>
             </DialogContent>
@@ -117,13 +132,14 @@ const Members = () => {
           ) : (
             <div className="overflow-x-auto">
               <Table>
-                <TableHeader><TableRow><TableHead>Name</TableHead><TableHead>Phone</TableHead><TableHead>Email</TableHead><TableHead>Gender</TableHead><TableHead>Department</TableHead><TableHead>Joined</TableHead><TableHead>Actions</TableHead></TableRow></TableHeader>
+                <TableHeader><TableRow><TableHead>Name</TableHead><TableHead>Phone</TableHead><TableHead>Email</TableHead><TableHead>DOB</TableHead><TableHead>Gender</TableHead><TableHead>Department</TableHead><TableHead>Joined</TableHead><TableHead>Actions</TableHead></TableRow></TableHeader>
                 <TableBody>
                   {filtered.map(m => (
                     <TableRow key={m.id}>
                       <TableCell className="font-medium">{m.name}</TableCell>
                       <TableCell>{m.phone}</TableCell>
                       <TableCell>{m.email || "—"}</TableCell>
+                      <TableCell>{m.date_of_birth || "—"}</TableCell>
                       <TableCell>{m.gender || "—"}</TableCell>
                       <TableCell><Badge variant="secondary">{m.department || "Unassigned"}</Badge></TableCell>
                       <TableCell className="text-muted-foreground text-sm">{m.join_date || "—"}</TableCell>
