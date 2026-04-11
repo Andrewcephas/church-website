@@ -28,6 +28,9 @@ import Analytics from "@/pages/admin/Analytics";
 import PrayerRequestForm from "@/pages/PrayerRequestForm";
 import Settings from "@/pages/admin/Settings";
 import SocialQuotes from "@/pages/admin/SocialQuotes";
+import Branches from "@/pages/admin/Branches";
+import SundaySchool from "@/pages/admin/SundaySchool";
+import UserRoles from "@/pages/admin/UserRoles";
 
 function App() {
   return (
@@ -59,6 +62,9 @@ function App() {
           <Route path="analytics" element={<Analytics />} />
           <Route path="settings" element={<Settings />} />
           <Route path="social-quotes" element={<SocialQuotes />} />
+          <Route path="branches" element={<Branches />} />
+          <Route path="sunday-school" element={<SundaySchool />} />
+          <Route path="user-roles" element={<UserRoles />} />
         </Route>
 
         <Route path="*" element={<PublicLayout><NotFound /></PublicLayout>} />

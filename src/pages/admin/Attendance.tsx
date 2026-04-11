@@ -10,11 +10,16 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Plus, ClipboardCheck, Trash2, Pencil } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { useUserRole, useBranches } from "@/hooks/use-user-role";
+import BranchSelector from "@/components/admin/BranchSelector";
 
 const services = ["Sunday Service", "Thursday Prayers", "Friday Kesha", "Saturday Devotion", "Special Event"];
-const emptyForm = { service: "", date: "", count: "", notes: "" };
+const emptyForm = { service: "", date: "", count: "", notes: "", branch_id: "" };
 
 const Attendance = () => {
+  const { isSuperAdmin, branchId: userBranch } = useUserRole();
+  const branches = useBranches();
+  const [selectedBranch, setSelectedBranch] = useState("all");
   const [records, setRecords] = useState<any[]>([]);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -22,73 +27,80 @@ const Attendance = () => {
   const [editId, setEditId] = useState<string | null>(null);
   const { toast } = useToast();
 
+  const branchFilter = isSuperAdmin ? (selectedBranch === "all" ? null : selectedBranch) : userBranch;
+
   const fetchRecords = async () => {
-    const { data } = await supabase.from("attendance").select("*").order("date", { ascending: false });
+    let q = supabase.from("attendance").select("*").order("date", { ascending: false });
+    if (branchFilter) q = q.eq("branch_id", branchFilter);
+    const { data } = await q;
     if (data) setRecords(data);
     setLoading(false);
   };
 
-  useEffect(() => { fetchRecords(); }, []);
+  useEffect(() => { fetchRecords(); }, [selectedBranch, userBranch]);
 
   const handleSave = async () => {
     if (!form.service || !form.date || !form.count) { toast({ title: "Fill required fields", variant: "destructive" }); return; }
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
+    const payload: any = { service: form.service, date: form.date, count: parseInt(form.count), notes: form.notes, branch_id: form.branch_id || userBranch || null };
 
     if (editId) {
-      const { error } = await supabase.from("attendance").update({ service: form.service, date: form.date, count: parseInt(form.count), notes: form.notes }).eq("id", editId);
-      if (error) { toast({ title: "Error", description: error.message, variant: "destructive" }); return; }
+      await supabase.from("attendance").update(payload).eq("id", editId);
       toast({ title: "Record updated" });
     } else {
-      const { error } = await supabase.from("attendance").insert({ service: form.service, date: form.date, count: parseInt(form.count), notes: form.notes, user_id: user.id });
-      if (error) { toast({ title: "Error", description: error.message, variant: "destructive" }); return; }
+      await supabase.from("attendance").insert({ ...payload, user_id: user.id });
       toast({ title: "Attendance recorded" });
     }
-    setForm(emptyForm);
-    setEditId(null);
-    setDialogOpen(false);
-    fetchRecords();
+    setForm(emptyForm); setEditId(null); setDialogOpen(false); fetchRecords();
   };
 
   const handleEdit = (r: any) => {
-    setForm({ service: r.service, date: r.date, count: String(r.count), notes: r.notes || "" });
-    setEditId(r.id);
-    setDialogOpen(true);
+    setForm({ service: r.service, date: r.date, count: String(r.count), notes: r.notes || "", branch_id: r.branch_id || "" });
+    setEditId(r.id); setDialogOpen(true);
   };
 
   const handleDelete = async (id: string) => {
     await supabase.from("attendance").delete().eq("id", id);
-    toast({ title: "Record deleted" });
-    fetchRecords();
+    toast({ title: "Record deleted" }); fetchRecords();
   };
-
-  const openAdd = () => { setForm(emptyForm); setEditId(null); setDialogOpen(true); };
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col sm:flex-row justify-between gap-4">
         <div>
           <h2 className="text-xl font-bold text-foreground">Attendance Records</h2>
           <p className="text-muted-foreground text-sm">Track attendance for each service</p>
         </div>
-        <Dialog open={dialogOpen} onOpenChange={(open) => { setDialogOpen(open); if (!open) { setEditId(null); setForm(emptyForm); } }}>
-          <DialogTrigger asChild><Button onClick={openAdd} className="bg-primary hover:bg-primary/90 text-primary-foreground"><Plus className="h-4 w-4 mr-2" />Record Attendance</Button></DialogTrigger>
-          <DialogContent>
-            <DialogHeader><DialogTitle>{editId ? "Edit Attendance" : "Record Attendance"}</DialogTitle></DialogHeader>
-            <div className="space-y-4">
-              <div><Label>Service *</Label>
-                <Select value={form.service} onValueChange={v => setForm({...form, service: v})}>
-                  <SelectTrigger><SelectValue placeholder="Select service" /></SelectTrigger>
-                  <SelectContent>{services.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
-                </Select>
+        <div className="flex gap-2 items-center">
+          {isSuperAdmin && <BranchSelector value={selectedBranch} onChange={setSelectedBranch} />}
+          <Dialog open={dialogOpen} onOpenChange={(open) => { setDialogOpen(open); if (!open) { setEditId(null); setForm(emptyForm); } }}>
+            <DialogTrigger asChild><Button onClick={() => { setForm(emptyForm); setEditId(null); setDialogOpen(true); }} className="bg-primary hover:bg-primary/90 text-primary-foreground"><Plus className="h-4 w-4 mr-2" />Record</Button></DialogTrigger>
+            <DialogContent>
+              <DialogHeader><DialogTitle>{editId ? "Edit Attendance" : "Record Attendance"}</DialogTitle></DialogHeader>
+              <div className="space-y-4">
+                <div><Label>Service *</Label>
+                  <Select value={form.service} onValueChange={v => setForm({...form, service: v})}>
+                    <SelectTrigger><SelectValue placeholder="Select service" /></SelectTrigger>
+                    <SelectContent>{services.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
+                  </Select>
+                </div>
+                <div><Label>Date *</Label><Input type="date" value={form.date} onChange={e => setForm({...form, date: e.target.value})} /></div>
+                <div><Label>Head Count *</Label><Input type="number" value={form.count} onChange={e => setForm({...form, count: e.target.value})} /></div>
+                <div><Label>Notes</Label><Input value={form.notes} onChange={e => setForm({...form, notes: e.target.value})} /></div>
+                {isSuperAdmin && (
+                  <div><Label>Branch</Label>
+                    <Select value={form.branch_id} onValueChange={v => setForm({...form, branch_id: v})}>
+                      <SelectTrigger><SelectValue placeholder="Select branch" /></SelectTrigger>
+                      <SelectContent>{branches.map(b => <SelectItem key={b.id} value={b.id}>{b.branch_name}</SelectItem>)}</SelectContent>
+                    </Select>
+                  </div>
+                )}
+                <Button onClick={handleSave} className="w-full bg-primary hover:bg-primary/90 text-primary-foreground">{editId ? "Update" : "Save"}</Button>
               </div>
-              <div><Label>Date *</Label><Input type="date" value={form.date} onChange={e => setForm({...form, date: e.target.value})} /></div>
-              <div><Label>Head Count *</Label><Input type="number" value={form.count} onChange={e => setForm({...form, count: e.target.value})} /></div>
-              <div><Label>Notes</Label><Input value={form.notes} onChange={e => setForm({...form, notes: e.target.value})} /></div>
-              <Button onClick={handleSave} className="w-full bg-primary hover:bg-primary/90 text-primary-foreground">{editId ? "Update Record" : "Save Record"}</Button>
-            </div>
-          </DialogContent>
-        </Dialog>
+            </DialogContent>
+          </Dialog>
+        </div>
       </div>
       <Card>
         <CardHeader><CardTitle className="flex items-center gap-2"><ClipboardCheck className="h-5 w-5 text-primary" />Attendance History</CardTitle></CardHeader>

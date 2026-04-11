@@ -10,12 +10,17 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Plus, DollarSign, Download, Trash2, Pencil } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { useUserRole, useBranches } from "@/hooks/use-user-role";
+import BranchSelector from "@/components/admin/BranchSelector";
 
 const types = ["Tithe", "Offering", "Donation", "Seed", "Building Fund", "Mission Support"];
 const methods = ["Cash", "M-Pesa", "Bank Transfer", "WhatsApp"];
-const emptyForm = { type: "", amount: "", date: "", giver: "", method: "", notes: "" };
+const emptyForm = { type: "", amount: "", date: "", giver: "", method: "", notes: "", branch_id: "" };
 
 const Finance = () => {
+  const { isSuperAdmin, branchId: userBranch } = useUserRole();
+  const branches = useBranches();
+  const [selectedBranch, setSelectedBranch] = useState("all");
   const [records, setRecords] = useState<any[]>([]);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -23,44 +28,42 @@ const Finance = () => {
   const [editId, setEditId] = useState<string | null>(null);
   const { toast } = useToast();
 
+  const branchFilter = isSuperAdmin ? (selectedBranch === "all" ? null : selectedBranch) : userBranch;
+
   const fetchRecords = async () => {
-    const { data } = await supabase.from("finance").select("*").order("date", { ascending: false });
+    let q = supabase.from("finance").select("*").order("date", { ascending: false });
+    if (branchFilter) q = q.eq("branch_id", branchFilter);
+    const { data } = await q;
     if (data) setRecords(data);
     setLoading(false);
   };
 
-  useEffect(() => { fetchRecords(); }, []);
+  useEffect(() => { fetchRecords(); }, [selectedBranch, userBranch]);
 
   const handleSave = async () => {
     if (!form.type || !form.amount || !form.date) { toast({ title: "Fill required fields", variant: "destructive" }); return; }
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
+    const payload: any = { type: form.type, amount: parseFloat(form.amount), date: form.date, giver: form.giver, method: form.method, notes: form.notes, branch_id: form.branch_id || userBranch || null };
 
     if (editId) {
-      const { error } = await supabase.from("finance").update({ type: form.type, amount: parseFloat(form.amount), date: form.date, giver: form.giver, method: form.method, notes: form.notes }).eq("id", editId);
-      if (error) { toast({ title: "Error", description: error.message, variant: "destructive" }); return; }
+      await supabase.from("finance").update(payload).eq("id", editId);
       toast({ title: "Record updated" });
     } else {
-      const { error } = await supabase.from("finance").insert({ type: form.type, amount: parseFloat(form.amount), date: form.date, giver: form.giver, method: form.method, notes: form.notes, user_id: user.id });
-      if (error) { toast({ title: "Error", description: error.message, variant: "destructive" }); return; }
+      await supabase.from("finance").insert({ ...payload, user_id: user.id });
       toast({ title: "Record added" });
     }
-    setForm(emptyForm);
-    setEditId(null);
-    setDialogOpen(false);
-    fetchRecords();
+    setForm(emptyForm); setEditId(null); setDialogOpen(false); fetchRecords();
   };
 
   const handleEdit = (r: any) => {
-    setForm({ type: r.type, amount: String(r.amount), date: r.date, giver: r.giver || "", method: r.method || "", notes: r.notes || "" });
-    setEditId(r.id);
-    setDialogOpen(true);
+    setForm({ type: r.type, amount: String(r.amount), date: r.date, giver: r.giver || "", method: r.method || "", notes: r.notes || "", branch_id: r.branch_id || "" });
+    setEditId(r.id); setDialogOpen(true);
   };
 
   const handleDelete = async (id: string) => {
     await supabase.from("finance").delete().eq("id", id);
-    toast({ title: "Record deleted" });
-    fetchRecords();
+    toast({ title: "Record deleted" }); fetchRecords();
   };
 
   const total = records.reduce((sum, r) => sum + Number(r.amount), 0);
@@ -71,8 +74,6 @@ const Finance = () => {
     const url = URL.createObjectURL(blob); const a = document.createElement("a"); a.href = url; a.download = "finance.csv"; a.click();
   };
 
-  const openAdd = () => { setForm(emptyForm); setEditId(null); setDialogOpen(true); };
-
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row justify-between gap-4">
@@ -80,10 +81,11 @@ const Finance = () => {
           <h2 className="text-xl font-bold text-foreground">Finance Management</h2>
           <p className="text-muted-foreground text-sm">Track tithes, offerings, and donations</p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 items-center">
+          {isSuperAdmin && <BranchSelector value={selectedBranch} onChange={setSelectedBranch} />}
           <Button variant="outline" onClick={handleExport} disabled={!records.length}><Download className="h-4 w-4 mr-2" />Export</Button>
           <Dialog open={dialogOpen} onOpenChange={(open) => { setDialogOpen(open); if (!open) { setEditId(null); setForm(emptyForm); } }}>
-            <DialogTrigger asChild><Button onClick={openAdd} className="bg-primary hover:bg-primary/90 text-primary-foreground"><Plus className="h-4 w-4 mr-2" />Add Record</Button></DialogTrigger>
+            <DialogTrigger asChild><Button onClick={() => { setForm(emptyForm); setEditId(null); setDialogOpen(true); }} className="bg-primary hover:bg-primary/90 text-primary-foreground"><Plus className="h-4 w-4 mr-2" />Add Record</Button></DialogTrigger>
             <DialogContent>
               <DialogHeader><DialogTitle>{editId ? "Edit Record" : "Add Finance Record"}</DialogTitle></DialogHeader>
               <div className="space-y-4">
@@ -103,7 +105,15 @@ const Finance = () => {
                   </Select>
                 </div>
                 <div><Label>Notes</Label><Input value={form.notes} onChange={e => setForm({...form, notes: e.target.value})} /></div>
-                <Button onClick={handleSave} className="w-full bg-primary hover:bg-primary/90 text-primary-foreground">{editId ? "Update Record" : "Save Record"}</Button>
+                {isSuperAdmin && (
+                  <div><Label>Branch</Label>
+                    <Select value={form.branch_id} onValueChange={v => setForm({...form, branch_id: v})}>
+                      <SelectTrigger><SelectValue placeholder="Select branch" /></SelectTrigger>
+                      <SelectContent>{branches.map(b => <SelectItem key={b.id} value={b.id}>{b.branch_name}</SelectItem>)}</SelectContent>
+                    </Select>
+                  </div>
+                )}
+                <Button onClick={handleSave} className="w-full bg-primary hover:bg-primary/90 text-primary-foreground">{editId ? "Update" : "Save"}</Button>
               </div>
             </DialogContent>
           </Dialog>

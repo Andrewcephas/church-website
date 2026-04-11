@@ -7,8 +7,12 @@ import { MessageSquare, Send, Trash2, Pencil } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { useUserRole } from "@/hooks/use-user-role";
+import BranchSelector from "@/components/admin/BranchSelector";
 
 const Communications = () => {
+  const { isSuperAdmin, branchId: userBranch } = useUserRole();
+  const [selectedBranch, setSelectedBranch] = useState("all");
   const [message, setMessage] = useState("");
   const [history, setHistory] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -17,55 +21,54 @@ const Communications = () => {
   const [editOpen, setEditOpen] = useState(false);
   const { toast } = useToast();
 
+  const branchFilter = isSuperAdmin ? (selectedBranch === "all" ? null : selectedBranch) : userBranch;
+
   const fetchHistory = async () => {
-    const { data } = await supabase.from("communications").select("*").order("created_at", { ascending: false });
+    let q = supabase.from("communications").select("*").order("created_at", { ascending: false });
+    if (branchFilter) q = q.eq("branch_id", branchFilter);
+    const { data } = await q;
     if (data) setHistory(data);
     setLoading(false);
   };
 
-  useEffect(() => { fetchHistory(); }, []);
+  useEffect(() => { fetchHistory(); }, [selectedBranch, userBranch]);
 
   const handleSend = async () => {
     if (!message.trim()) return;
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
-    const { error } = await supabase.from("communications").insert({ message, user_id: user.id });
-    if (error) { toast({ title: "Error", description: error.message, variant: "destructive" }); return; }
-    setMessage("");
-    toast({ title: "Announcement saved" });
-    fetchHistory();
+    await supabase.from("communications").insert({ message, user_id: user.id, branch_id: userBranch || null });
+    setMessage(""); toast({ title: "Announcement saved" }); fetchHistory();
   };
 
   const handleUpdate = async () => {
     if (!editMessage.trim() || !editId) return;
-    const { error } = await supabase.from("communications").update({ message: editMessage }).eq("id", editId);
-    if (error) { toast({ title: "Error", variant: "destructive" }); return; }
-    setEditOpen(false);
-    setEditId(null);
-    toast({ title: "Announcement updated" });
-    fetchHistory();
+    await supabase.from("communications").update({ message: editMessage }).eq("id", editId);
+    setEditOpen(false); setEditId(null); toast({ title: "Updated" }); fetchHistory();
   };
 
   const handleDelete = async (id: string) => {
     await supabase.from("communications").delete().eq("id", id);
-    toast({ title: "Announcement deleted" });
-    fetchHistory();
+    toast({ title: "Deleted" }); fetchHistory();
   };
 
   return (
     <div className="space-y-6">
-      <h2 className="text-xl font-bold text-foreground">Communications</h2>
+      <div className="flex justify-between items-center">
+        <h2 className="text-xl font-bold text-foreground">Communications</h2>
+        {isSuperAdmin && <BranchSelector value={selectedBranch} onChange={setSelectedBranch} />}
+      </div>
       <Card>
         <CardHeader><CardTitle className="flex items-center gap-2"><MessageSquare className="h-5 w-5 text-primary" />Send Announcement</CardTitle></CardHeader>
         <CardContent className="space-y-4">
           <div><Label>Message</Label><Textarea value={message} onChange={e => setMessage(e.target.value)} placeholder="Type your announcement..." rows={4} /></div>
-          <Button onClick={handleSend} className="bg-primary hover:bg-primary/90 text-primary-foreground"><Send className="h-4 w-4 mr-2" />Send Announcement</Button>
+          <Button onClick={handleSend} className="bg-primary hover:bg-primary/90 text-primary-foreground"><Send className="h-4 w-4 mr-2" />Send</Button>
         </CardContent>
       </Card>
       <Card>
-        <CardHeader><CardTitle>Announcement History</CardTitle></CardHeader>
+        <CardHeader><CardTitle>History</CardTitle></CardHeader>
         <CardContent>
-          {loading ? <p className="text-muted-foreground text-center py-4">Loading...</p> : history.length === 0 ? <p className="text-muted-foreground text-center py-4">No announcements sent yet.</p> : (
+          {loading ? <p className="text-muted-foreground text-center py-4">Loading...</p> : history.length === 0 ? <p className="text-muted-foreground text-center py-4">No announcements.</p> : (
             <div className="space-y-3">{history.map(h => (
               <div key={h.id} className="p-3 bg-muted rounded-md">
                 <p className="text-sm text-foreground">{h.message}</p>

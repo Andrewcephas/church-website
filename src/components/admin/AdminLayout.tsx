@@ -4,19 +4,23 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import {
   LayoutDashboard, Users, ClipboardCheck, DollarSign, Calendar, Book,
-  MessageSquare, Heart, BarChart3, LogOut, Menu, ChevronLeft, Settings, Sparkles
+  MessageSquare, Heart, BarChart3, LogOut, Menu, ChevronLeft, Settings, Sparkles,
+  Building2, GraduationCap, Shield
 } from "lucide-react";
 
 const sidebarItems = [
   { title: "Dashboard", href: "/admin", icon: LayoutDashboard },
+  { title: "Branches", href: "/admin/branches", icon: Building2 },
   { title: "Members", href: "/admin/members", icon: Users },
   { title: "Attendance", href: "/admin/attendance", icon: ClipboardCheck },
   { title: "Finance", href: "/admin/finance", icon: DollarSign },
   { title: "Events", href: "/admin/events", icon: Calendar },
   { title: "Sermons", href: "/admin/sermons", icon: Book },
+  { title: "Sunday School", href: "/admin/sunday-school", icon: GraduationCap },
   { title: "Communications", href: "/admin/communications", icon: MessageSquare },
   { title: "Prayer Requests", href: "/admin/prayer-requests", icon: Heart },
   { title: "Social Quotes", href: "/admin/social-quotes", icon: Sparkles },
+  { title: "User Roles", href: "/admin/user-roles", icon: Shield },
   { title: "Analytics", href: "/admin/analytics", icon: BarChart3 },
   { title: "Settings", href: "/admin/settings", icon: Settings },
 ];
