@@ -2,10 +2,11 @@ import { useEffect, useState } from "react";
 import { Outlet, useNavigate, Link, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import {
   LayoutDashboard, Users, ClipboardCheck, DollarSign, Calendar, Book,
   MessageSquare, Heart, BarChart3, LogOut, Menu, ChevronLeft, Settings, Sparkles,
-  Building2, GraduationCap, Shield
+  Building2, GraduationCap, Shield, Bell, Mail
 } from "lucide-react";
 
 const sidebarItems = [
@@ -17,6 +18,8 @@ const sidebarItems = [
   { title: "Events", href: "/admin/events", icon: Calendar },
   { title: "Sermons", href: "/admin/sermons", icon: Book },
   { title: "Sunday School", href: "/admin/sunday-school", icon: GraduationCap },
+  { title: "Notices", href: "/admin/notices", icon: Bell },
+  { title: "Messages", href: "/admin/messages", icon: Mail },
   { title: "Communications", href: "/admin/communications", icon: MessageSquare },
   { title: "Prayer Requests", href: "/admin/prayer-requests", icon: Heart },
   { title: "Social Quotes", href: "/admin/social-quotes", icon: Sparkles },
@@ -29,14 +32,23 @@ const AdminLayout = () => {
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [collapsed, setCollapsed] = useState(false);
+  const [unreadMessages, setUnreadMessages] = useState(0);
   const navigate = useNavigate();
   const location = useLocation();
 
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
       setUser(session?.user ?? null);
       setLoading(false);
       if (!session?.user) navigate("/login");
+
+      // Log login activity
+      if (_event === "SIGNED_IN" && session?.user) {
+        await supabase.from("login_activity").insert({
+          user_id: session.user.id,
+          user_email: session.user.email,
+        });
+      }
     });
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null);
@@ -45,6 +57,14 @@ const AdminLayout = () => {
     });
     return () => subscription.unsubscribe();
   }, [navigate]);
+
+  // Check unread messages
+  useEffect(() => {
+    if (!user) return;
+    supabase.from("private_messages").select("id", { count: "exact", head: true })
+      .eq("receiver_id", user.id).eq("is_read", false)
+      .then(({ count }) => setUnreadMessages(count || 0));
+  }, [user, location]);
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -76,6 +96,9 @@ const AdminLayout = () => {
                 className={`flex items-center gap-3 px-3 py-2.5 rounded-md text-sm transition-colors ${isActive ? 'bg-sidebar-primary text-sidebar-primary-foreground' : 'text-sidebar-foreground hover:bg-sidebar-accent'}`}>
                 <item.icon className="h-4 w-4 shrink-0" />
                 {!collapsed && <span>{item.title}</span>}
+                {!collapsed && item.href === "/admin/messages" && unreadMessages > 0 && (
+                  <Badge variant="destructive" className="ml-auto text-xs h-5 px-1.5">{unreadMessages}</Badge>
+                )}
               </Link>
             );
           })}
