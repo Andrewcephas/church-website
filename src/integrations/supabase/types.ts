@@ -121,6 +121,7 @@ export type Database = {
           date: string
           description: string | null
           id: string
+          is_conference: boolean | null
           time: string | null
           title: string
           user_id: string
@@ -131,6 +132,7 @@ export type Database = {
           date: string
           description?: string | null
           id?: string
+          is_conference?: boolean | null
           time?: string | null
           title: string
           user_id: string
@@ -141,6 +143,7 @@ export type Database = {
           date?: string
           description?: string | null
           id?: string
+          is_conference?: boolean | null
           time?: string | null
           title?: string
           user_id?: string
@@ -202,8 +205,30 @@ export type Database = {
           },
         ]
       }
+      login_activity: {
+        Row: {
+          id: string
+          login_at: string | null
+          user_email: string | null
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          login_at?: string | null
+          user_email?: string | null
+          user_id: string
+        }
+        Update: {
+          id?: string
+          login_at?: string | null
+          user_email?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       members: {
         Row: {
+          address: string | null
           branch_id: string | null
           created_at: string | null
           date_of_birth: string | null
@@ -212,12 +237,14 @@ export type Database = {
           gender: string | null
           id: string
           join_date: string | null
+          member_category: string | null
           name: string
           phone: string
           updated_at: string | null
           user_id: string
         }
         Insert: {
+          address?: string | null
           branch_id?: string | null
           created_at?: string | null
           date_of_birth?: string | null
@@ -226,12 +253,14 @@ export type Database = {
           gender?: string | null
           id?: string
           join_date?: string | null
+          member_category?: string | null
           name: string
           phone: string
           updated_at?: string | null
           user_id: string
         }
         Update: {
+          address?: string | null
           branch_id?: string | null
           created_at?: string | null
           date_of_birth?: string | null
@@ -240,6 +269,7 @@ export type Database = {
           gender?: string | null
           id?: string
           join_date?: string | null
+          member_category?: string | null
           name?: string
           phone?: string
           updated_at?: string | null
@@ -248,6 +278,47 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "members_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      notices: {
+        Row: {
+          branch_id: string | null
+          content: string
+          created_at: string | null
+          id: string
+          is_global: boolean | null
+          title: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          branch_id?: string | null
+          content: string
+          created_at?: string | null
+          id?: string
+          is_global?: boolean | null
+          title: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          branch_id?: string | null
+          content?: string
+          created_at?: string | null
+          id?: string
+          is_global?: boolean | null
+          title?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notices_branch_id_fkey"
             columns: ["branch_id"]
             isOneToOne: false
             referencedRelation: "branches"
@@ -279,6 +350,33 @@ export type Database = {
           name?: string
           request?: string
           status?: string | null
+        }
+        Relationships: []
+      }
+      private_messages: {
+        Row: {
+          created_at: string | null
+          id: string
+          is_read: boolean | null
+          message: string
+          receiver_id: string
+          sender_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          is_read?: boolean | null
+          message: string
+          receiver_id: string
+          sender_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          is_read?: boolean | null
+          message?: string
+          receiver_id?: string
+          sender_id?: string
         }
         Relationships: []
       }
@@ -513,7 +611,7 @@ export type Database = {
       }
     }
     Enums: {
-      app_role: "super_admin" | "branch_admin"
+      app_role: "super_admin" | "branch_admin" | "secretary" | "member"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -641,7 +739,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["super_admin", "branch_admin"],
+      app_role: ["super_admin", "branch_admin", "secretary", "member"],
     },
   },
 } as const
