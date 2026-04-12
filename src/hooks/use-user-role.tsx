@@ -1,13 +1,16 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
-export type AppRole = "super_admin" | "branch_admin";
+export type AppRole = "super_admin" | "branch_admin" | "secretary" | "member";
 
 export interface UserRole {
   role: AppRole | null;
   branchId: string | null;
   loading: boolean;
   isSuperAdmin: boolean;
+  isBranchAdmin: boolean;
+  isSecretary: boolean;
+  isMember: boolean;
 }
 
 export const useUserRole = (): UserRole => {
@@ -33,7 +36,15 @@ export const useUserRole = (): UserRole => {
     fetch();
   }, []);
 
-  return { role, branchId, loading, isSuperAdmin: role === "super_admin" };
+  return {
+    role,
+    branchId,
+    loading,
+    isSuperAdmin: role === "super_admin",
+    isBranchAdmin: role === "branch_admin",
+    isSecretary: role === "secretary",
+    isMember: role === "member",
+  };
 };
 
 export const useBranches = () => {

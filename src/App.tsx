@@ -31,6 +31,8 @@ import SocialQuotes from "@/pages/admin/SocialQuotes";
 import Branches from "@/pages/admin/Branches";
 import SundaySchool from "@/pages/admin/SundaySchool";
 import UserRoles from "@/pages/admin/UserRoles";
+import Notices from "@/pages/admin/Notices";
+import Messages from "@/pages/admin/Messages";
 
 function App() {
   return (
@@ -65,6 +67,8 @@ function App() {
           <Route path="branches" element={<Branches />} />
           <Route path="sunday-school" element={<SundaySchool />} />
           <Route path="user-roles" element={<UserRoles />} />
+          <Route path="notices" element={<Notices />} />
+          <Route path="messages" element={<Messages />} />
         </Route>
 
         <Route path="*" element={<PublicLayout><NotFound /></PublicLayout>} />
