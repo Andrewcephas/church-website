@@ -14,7 +14,8 @@ import { useUserRole, useBranches } from "@/hooks/use-user-role";
 import BranchSelector from "@/components/admin/BranchSelector";
 
 const departments = ["Choir", "Praise & Worship", "Dance", "Youth", "Women", "Men", "Hospitality", "Crusades"];
-const emptyForm = { name: "", phone: "", email: "", gender: "", department: "", date_of_birth: "", branch_id: "" };
+const memberCategories = ["Adult", "Youth", "Sunday School"];
+const emptyForm = { name: "", phone: "", email: "", gender: "", department: "", date_of_birth: "", branch_id: "", address: "", member_category: "Adult" };
 
 const Members = () => {
   const { isSuperAdmin, branchId: userBranch } = useUserRole();
@@ -22,6 +23,8 @@ const Members = () => {
   const [selectedBranch, setSelectedBranch] = useState("all");
   const [members, setMembers] = useState<any[]>([]);
   const [search, setSearch] = useState("");
+  const [filterGender, setFilterGender] = useState("all");
+  const [filterCategory, setFilterCategory] = useState("all");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [form, setForm] = useState(emptyForm);
@@ -44,7 +47,12 @@ const Members = () => {
     if (!form.name || !form.phone) { toast({ title: "Name and phone are required", variant: "destructive" }); return; }
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
-    const payload: any = { name: form.name, phone: form.phone, email: form.email, gender: form.gender, department: form.department, date_of_birth: form.date_of_birth || null, branch_id: form.branch_id || userBranch || null };
+    const payload: any = {
+      name: form.name, phone: form.phone, email: form.email, gender: form.gender,
+      department: form.department, date_of_birth: form.date_of_birth || null,
+      branch_id: form.branch_id || userBranch || null, address: form.address,
+      member_category: form.member_category
+    };
 
     if (editId) {
       const { error } = await supabase.from("members").update({ ...payload, updated_at: new Date().toISOString() }).eq("id", editId);
@@ -59,7 +67,12 @@ const Members = () => {
   };
 
   const handleEdit = (m: any) => {
-    setForm({ name: m.name, phone: m.phone, email: m.email || "", gender: m.gender || "", department: m.department || "", date_of_birth: m.date_of_birth || "", branch_id: m.branch_id || "" });
+    setForm({
+      name: m.name, phone: m.phone, email: m.email || "", gender: m.gender || "",
+      department: m.department || "", date_of_birth: m.date_of_birth || "",
+      branch_id: m.branch_id || "", address: m.address || "",
+      member_category: m.member_category || "Adult"
+    });
     setEditId(m.id); setDialogOpen(true);
   };
 
@@ -69,39 +82,67 @@ const Members = () => {
   };
 
   const handleExport = () => {
-    const csv = "Name,Phone,Email,Gender,Department,DOB,Join Date\n" + members.map(m => `${m.name},${m.phone},${m.email || ""},${m.gender || ""},${m.department || ""},${m.date_of_birth || ""},${m.join_date || ""}`).join("\n");
+    const csv = "Name,Phone,Email,Gender,Category,Department,DOB,Address,Join Date\n" +
+      members.map(m => `${m.name},${m.phone},${m.email || ""},${m.gender || ""},${m.member_category || ""},${m.department || ""},${m.date_of_birth || ""},${(m.address || "").replace(/,/g, ";")},${m.join_date || ""}`).join("\n");
     const blob = new Blob([csv], { type: "text/csv" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a"); a.href = url; a.download = "members.csv"; a.click();
   };
 
-  const filtered = members.filter(m => m.name.toLowerCase().includes(search.toLowerCase()) || (m.department || "").toLowerCase().includes(search.toLowerCase()));
+  const filtered = members.filter(m => {
+    const matchSearch = m.name.toLowerCase().includes(search.toLowerCase()) || (m.department || "").toLowerCase().includes(search.toLowerCase());
+    const matchGender = filterGender === "all" || m.gender === filterGender;
+    const matchCategory = filterCategory === "all" || m.member_category === filterCategory;
+    return matchSearch && matchGender && matchCategory;
+  });
 
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row justify-between gap-4">
-        <div className="flex gap-2 flex-1">
-          <div className="relative flex-1 max-w-sm">
+        <div className="flex gap-2 flex-1 flex-wrap">
+          <div className="relative flex-1 min-w-[200px] max-w-sm">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input placeholder="Search members..." value={search} onChange={e => setSearch(e.target.value)} className="pl-10" />
           </div>
           {isSuperAdmin && <BranchSelector value={selectedBranch} onChange={setSelectedBranch} />}
+          <Select value={filterGender} onValueChange={setFilterGender}>
+            <SelectTrigger className="w-[130px]"><SelectValue placeholder="Gender" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Genders</SelectItem>
+              <SelectItem value="Male">Male</SelectItem>
+              <SelectItem value="Female">Female</SelectItem>
+            </SelectContent>
+          </Select>
+          <Select value={filterCategory} onValueChange={setFilterCategory}>
+            <SelectTrigger className="w-[150px]"><SelectValue placeholder="Category" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Categories</SelectItem>
+              {memberCategories.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+            </SelectContent>
+          </Select>
         </div>
         <div className="flex gap-2">
           <Button variant="outline" onClick={handleExport} disabled={!members.length}><Download className="h-4 w-4 mr-2" />Export</Button>
           <Dialog open={dialogOpen} onOpenChange={(open) => { setDialogOpen(open); if (!open) { setEditId(null); setForm(emptyForm); } }}>
             <DialogTrigger asChild><Button onClick={() => { setForm(emptyForm); setEditId(null); setDialogOpen(true); }} className="bg-primary hover:bg-primary/90 text-primary-foreground"><Plus className="h-4 w-4 mr-2" />Add Member</Button></DialogTrigger>
-            <DialogContent>
+            <DialogContent className="max-h-[90vh] overflow-y-auto">
               <DialogHeader><DialogTitle>{editId ? "Edit Member" : "Add New Member"}</DialogTitle></DialogHeader>
               <div className="space-y-4">
                 <div><Label>Full Name *</Label><Input value={form.name} onChange={e => setForm({...form, name: e.target.value})} /></div>
                 <div><Label>Phone *</Label><Input value={form.phone} onChange={e => setForm({...form, phone: e.target.value})} /></div>
                 <div><Label>Email</Label><Input type="email" value={form.email} onChange={e => setForm({...form, email: e.target.value})} /></div>
                 <div><Label>Date of Birth</Label><Input type="date" value={form.date_of_birth} onChange={e => setForm({...form, date_of_birth: e.target.value})} /></div>
+                <div><Label>Address</Label><Input value={form.address} onChange={e => setForm({...form, address: e.target.value})} placeholder="Physical address" /></div>
                 <div><Label>Gender</Label>
                   <Select value={form.gender} onValueChange={v => setForm({...form, gender: v})}>
                     <SelectTrigger><SelectValue placeholder="Select gender" /></SelectTrigger>
                     <SelectContent><SelectItem value="Male">Male</SelectItem><SelectItem value="Female">Female</SelectItem></SelectContent>
+                  </Select>
+                </div>
+                <div><Label>Member Category</Label>
+                  <Select value={form.member_category} onValueChange={v => setForm({...form, member_category: v})}>
+                    <SelectTrigger><SelectValue placeholder="Select category" /></SelectTrigger>
+                    <SelectContent>{memberCategories.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent>
                   </Select>
                 </div>
                 <div><Label>Department</Label>
@@ -132,15 +173,15 @@ const Members = () => {
           ) : (
             <div className="overflow-x-auto">
               <Table>
-                <TableHeader><TableRow><TableHead>Name</TableHead><TableHead>Phone</TableHead><TableHead>Email</TableHead><TableHead>DOB</TableHead><TableHead>Gender</TableHead><TableHead>Department</TableHead><TableHead>Joined</TableHead><TableHead>Actions</TableHead></TableRow></TableHeader>
+                <TableHeader><TableRow><TableHead>Name</TableHead><TableHead>Phone</TableHead><TableHead>Email</TableHead><TableHead>Gender</TableHead><TableHead>Category</TableHead><TableHead>Department</TableHead><TableHead>Joined</TableHead><TableHead>Actions</TableHead></TableRow></TableHeader>
                 <TableBody>
                   {filtered.map(m => (
                     <TableRow key={m.id}>
                       <TableCell className="font-medium">{m.name}</TableCell>
                       <TableCell>{m.phone}</TableCell>
                       <TableCell>{m.email || "—"}</TableCell>
-                      <TableCell>{m.date_of_birth || "—"}</TableCell>
                       <TableCell>{m.gender || "—"}</TableCell>
+                      <TableCell><Badge variant="outline">{m.member_category || "Adult"}</Badge></TableCell>
                       <TableCell><Badge variant="secondary">{m.department || "Unassigned"}</Badge></TableCell>
                       <TableCell className="text-muted-foreground text-sm">{m.join_date || "—"}</TableCell>
                       <TableCell>
