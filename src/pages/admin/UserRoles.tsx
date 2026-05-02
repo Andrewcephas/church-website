@@ -16,6 +16,7 @@ const roleLabels: Record<string, string> = {
   super_admin: "Super Admin (Bishop)",
   branch_admin: "Branch Pastor",
   secretary: "Secretary",
+  teacher: "Sunday School Teacher",
   member: "Member",
 };
 
@@ -25,7 +26,7 @@ const UserRoles = () => {
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [activityOpen, setActivityOpen] = useState(false);
-  const [form, setForm] = useState({ user_id: "", role: "", branch_id: "" });
+  const [form, setForm] = useState({ email: "", role: "", branch_id: "" });
   const branches = useBranches();
   const { toast } = useToast();
 
@@ -43,12 +44,18 @@ const UserRoles = () => {
   useEffect(() => { fetchRoles(); fetchLoginActivity(); }, []);
 
   const handleAssign = async () => {
-    if (!form.user_id || !form.role) { toast({ title: "User ID and role required", variant: "destructive" }); return; }
-    const payload: any = { user_id: form.user_id, role: form.role };
+    if (!form.email || !form.role) { toast({ title: "Email and role required", variant: "destructive" }); return; }
+    // Lookup user by email
+    const { data: userId, error: lookupError } = await supabase.rpc("find_user_by_email", { _email: form.email.trim() });
+    if (lookupError || !userId) {
+      toast({ title: "User not found", description: "Make sure they have signed up first.", variant: "destructive" });
+      return;
+    }
+    const payload: any = { user_id: userId, role: form.role };
     if (form.role !== "super_admin" && form.branch_id) payload.branch_id = form.branch_id;
     const { error } = await supabase.from("user_roles").insert(payload);
     if (error) { toast({ title: "Error", description: error.message, variant: "destructive" }); return; }
-    toast({ title: "Role assigned" }); setDialogOpen(false); setForm({ user_id: "", role: "", branch_id: "" }); fetchRoles();
+    toast({ title: "Role assigned" }); setDialogOpen(false); setForm({ email: "", role: "", branch_id: "" }); fetchRoles();
   };
 
   const handleDelete = async (id: string) => {
