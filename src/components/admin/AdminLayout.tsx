@@ -36,6 +36,13 @@ const AdminLayout = () => {
   const [unreadMessages, setUnreadMessages] = useState(0);
   const navigate = useNavigate();
   const location = useLocation();
+  const { role, can, loading: roleLoading } = useUserRole();
+
+  const visibleItems = sidebarItems.filter(i => can(i.key));
+  const roleLabel: Record<string, string> = {
+    super_admin: "Bishop", branch_admin: "Pastor", secretary: "Secretary",
+    teacher: "Teacher", member: "Member"
+  };
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
