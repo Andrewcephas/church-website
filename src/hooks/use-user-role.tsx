@@ -62,7 +62,7 @@ export const useUserRole = (): UserRole => {
     role,
     branchId,
     loading,
-    isSuperAdmin: role === "super_admin" || role === null,
+    isSuperAdmin: role === "super_admin",
     isBranchAdmin: role === "branch_admin",
     isSecretary: role === "secretary",
     isTeacher: role === "teacher",
