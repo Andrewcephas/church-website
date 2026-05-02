@@ -68,9 +68,27 @@ const Analytics = () => {
         aMonthMap[month].count += 1;
       });
       setAttendanceData(Object.entries(aMonthMap).slice(-12).map(([month, d]) => ({ month, avg: Math.round(d.total / d.count) })));
+
+      // Branch comparison (super admin only)
+      if (isSuperAdmin) {
+        const { data: branches } = await supabase.from("branches").select("id, branch_name");
+        if (branches) {
+          const comp = await Promise.all(branches.map(async (b) => {
+            const [mc, fc, ac] = await Promise.all([
+              supabase.from("members").select("id", { count: "exact", head: true }).eq("branch_id", b.id),
+              supabase.from("finance").select("amount").eq("branch_id", b.id),
+              supabase.from("attendance").select("count").eq("branch_id", b.id),
+            ]);
+            const giving = (fc.data || []).reduce((s, r) => s + Number(r.amount), 0);
+            const att = (ac.data || []).length > 0 ? Math.round((ac.data || []).reduce((s, r) => s + r.count, 0) / (ac.data || []).length) : 0;
+            return { branch: b.branch_name, members: mc.count || 0, giving, attendance: att };
+          }));
+          setBranchComparison(comp);
+        }
+      }
     };
     fetchAll();
-  }, [selectedBranch, userBranch]);
+  }, [selectedBranch, userBranch, isSuperAdmin]);
 
   const stats = [
     ...(isSuperAdmin ? [{ title: "Total Branches", value: data.branches.toString(), icon: Building2, desc: "All locations" }] : []),
