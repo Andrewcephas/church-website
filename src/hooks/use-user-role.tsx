@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
-export type AppRole = "super_admin" | "branch_admin" | "secretary" | "member";
+export type AppRole = "super_admin" | "branch_admin" | "secretary" | "teacher" | "member";
 
 export interface UserRole {
   role: AppRole | null;
@@ -10,8 +10,25 @@ export interface UserRole {
   isSuperAdmin: boolean;
   isBranchAdmin: boolean;
   isSecretary: boolean;
+  isTeacher: boolean;
   isMember: boolean;
+  /** Whether this role can access a given module key */
+  can: (module: ModuleKey) => boolean;
 }
+
+export type ModuleKey =
+  | "dashboard" | "branches" | "members" | "attendance" | "finance"
+  | "events" | "sermons" | "sunday_school" | "notices" | "messages"
+  | "communications" | "prayer_requests" | "social_quotes" | "user_roles"
+  | "analytics" | "settings";
+
+const PERMISSIONS: Record<AppRole, ModuleKey[]> = {
+  super_admin: ["dashboard","branches","members","attendance","finance","events","sermons","sunday_school","notices","messages","communications","prayer_requests","social_quotes","user_roles","analytics","settings"],
+  branch_admin: ["dashboard","members","attendance","finance","events","sermons","sunday_school","notices","messages","communications","prayer_requests","social_quotes","analytics","settings"],
+  secretary: ["dashboard","members","attendance","events","notices","communications","prayer_requests","social_quotes"],
+  teacher: ["dashboard","sunday_school","social_quotes"],
+  member: ["dashboard","social_quotes"],
+};
 
 export const useUserRole = (): UserRole => {
   const [role, setRole] = useState<AppRole | null>(null);
@@ -36,14 +53,21 @@ export const useUserRole = (): UserRole => {
     fetch();
   }, []);
 
+  const can = (module: ModuleKey) => {
+    if (!role) return true; // until role is assigned, behave as full-access (bootstrap)
+    return PERMISSIONS[role]?.includes(module) ?? false;
+  };
+
   return {
     role,
     branchId,
     loading,
-    isSuperAdmin: role === "super_admin",
+    isSuperAdmin: role === "super_admin" || role === null,
     isBranchAdmin: role === "branch_admin",
     isSecretary: role === "secretary",
+    isTeacher: role === "teacher",
     isMember: role === "member",
+    can,
   };
 };
 
