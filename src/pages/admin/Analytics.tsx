@@ -16,6 +16,7 @@ const Analytics = () => {
   const [categoryData, setCategoryData] = useState<any[]>([]);
   const [financeData, setFinanceData] = useState<any[]>([]);
   const [attendanceData, setAttendanceData] = useState<any[]>([]);
+  const [branchComparison, setBranchComparison] = useState<any[]>([]);
 
   const branchFilter = isSuperAdmin ? (selectedBranch === "all" ? null : selectedBranch) : userBranch;
 
@@ -67,9 +68,27 @@ const Analytics = () => {
         aMonthMap[month].count += 1;
       });
       setAttendanceData(Object.entries(aMonthMap).slice(-12).map(([month, d]) => ({ month, avg: Math.round(d.total / d.count) })));
+
+      // Branch comparison (super admin only)
+      if (isSuperAdmin) {
+        const { data: branches } = await supabase.from("branches").select("id, branch_name");
+        if (branches) {
+          const comp = await Promise.all(branches.map(async (b) => {
+            const [mc, fc, ac] = await Promise.all([
+              supabase.from("members").select("id", { count: "exact", head: true }).eq("branch_id", b.id),
+              supabase.from("finance").select("amount").eq("branch_id", b.id),
+              supabase.from("attendance").select("count").eq("branch_id", b.id),
+            ]);
+            const giving = (fc.data || []).reduce((s, r) => s + Number(r.amount), 0);
+            const att = (ac.data || []).length > 0 ? Math.round((ac.data || []).reduce((s, r) => s + r.count, 0) / (ac.data || []).length) : 0;
+            return { branch: b.branch_name, members: mc.count || 0, giving, attendance: att };
+          }));
+          setBranchComparison(comp);
+        }
+      }
     };
     fetchAll();
-  }, [selectedBranch, userBranch]);
+  }, [selectedBranch, userBranch, isSuperAdmin]);
 
   const stats = [
     ...(isSuperAdmin ? [{ title: "Total Branches", value: data.branches.toString(), icon: Building2, desc: "All locations" }] : []),
@@ -173,6 +192,30 @@ const Analytics = () => {
           </CardContent>
         </Card>
       </div>
+
+      {/* Branch comparison — Bishop only */}
+      {isSuperAdmin && branchComparison.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-sm flex items-center gap-2"><Building2 className="h-4 w-4 text-primary" />Branch Comparison</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={300}>
+              <BarChart data={branchComparison}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="branch" />
+                <YAxis yAxisId="left" />
+                <YAxis yAxisId="right" orientation="right" />
+                <Tooltip />
+                <Legend />
+                <Bar yAxisId="left" dataKey="members" fill="hsl(280, 85%, 45%)" name="Members" radius={[4,4,0,0]} />
+                <Bar yAxisId="left" dataKey="attendance" fill="hsl(45, 100%, 50%)" name="Avg Attendance" radius={[4,4,0,0]} />
+                <Bar yAxisId="right" dataKey="giving" fill="hsl(280, 60%, 60%)" name="Total Giving (KES)" radius={[4,4,0,0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 };

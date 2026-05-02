@@ -3,29 +3,30 @@ import { Outlet, useNavigate, Link, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { useUserRole, type ModuleKey } from "@/hooks/use-user-role";
 import {
   LayoutDashboard, Users, ClipboardCheck, DollarSign, Calendar, Book,
   MessageSquare, Heart, BarChart3, LogOut, Menu, ChevronLeft, Settings, Sparkles,
   Building2, GraduationCap, Shield, Bell, Mail
 } from "lucide-react";
 
-const sidebarItems = [
-  { title: "Dashboard", href: "/admin", icon: LayoutDashboard },
-  { title: "Branches", href: "/admin/branches", icon: Building2 },
-  { title: "Members", href: "/admin/members", icon: Users },
-  { title: "Attendance", href: "/admin/attendance", icon: ClipboardCheck },
-  { title: "Finance", href: "/admin/finance", icon: DollarSign },
-  { title: "Events", href: "/admin/events", icon: Calendar },
-  { title: "Sermons", href: "/admin/sermons", icon: Book },
-  { title: "Sunday School", href: "/admin/sunday-school", icon: GraduationCap },
-  { title: "Notices", href: "/admin/notices", icon: Bell },
-  { title: "Messages", href: "/admin/messages", icon: Mail },
-  { title: "Communications", href: "/admin/communications", icon: MessageSquare },
-  { title: "Prayer Requests", href: "/admin/prayer-requests", icon: Heart },
-  { title: "Social Quotes", href: "/admin/social-quotes", icon: Sparkles },
-  { title: "User Roles", href: "/admin/user-roles", icon: Shield },
-  { title: "Analytics", href: "/admin/analytics", icon: BarChart3 },
-  { title: "Settings", href: "/admin/settings", icon: Settings },
+const sidebarItems: { title: string; href: string; icon: any; key: ModuleKey }[] = [
+  { title: "Dashboard", href: "/admin", icon: LayoutDashboard, key: "dashboard" },
+  { title: "Branches", href: "/admin/branches", icon: Building2, key: "branches" },
+  { title: "Members", href: "/admin/members", icon: Users, key: "members" },
+  { title: "Attendance", href: "/admin/attendance", icon: ClipboardCheck, key: "attendance" },
+  { title: "Finance", href: "/admin/finance", icon: DollarSign, key: "finance" },
+  { title: "Events", href: "/admin/events", icon: Calendar, key: "events" },
+  { title: "Sermons", href: "/admin/sermons", icon: Book, key: "sermons" },
+  { title: "Sunday School", href: "/admin/sunday-school", icon: GraduationCap, key: "sunday_school" },
+  { title: "Notices", href: "/admin/notices", icon: Bell, key: "notices" },
+  { title: "Messages", href: "/admin/messages", icon: Mail, key: "messages" },
+  { title: "Communications", href: "/admin/communications", icon: MessageSquare, key: "communications" },
+  { title: "Prayer Requests", href: "/admin/prayer-requests", icon: Heart, key: "prayer_requests" },
+  { title: "Social Quotes", href: "/admin/social-quotes", icon: Sparkles, key: "social_quotes" },
+  { title: "User Roles", href: "/admin/user-roles", icon: Shield, key: "user_roles" },
+  { title: "Analytics", href: "/admin/analytics", icon: BarChart3, key: "analytics" },
+  { title: "Settings", href: "/admin/settings", icon: Settings, key: "settings" },
 ];
 
 const AdminLayout = () => {
@@ -35,6 +36,13 @@ const AdminLayout = () => {
   const [unreadMessages, setUnreadMessages] = useState(0);
   const navigate = useNavigate();
   const location = useLocation();
+  const { role, can, loading: roleLoading } = useUserRole();
+
+  const visibleItems = sidebarItems.filter(i => can(i.key));
+  const roleLabel: Record<string, string> = {
+    super_admin: "Bishop", branch_admin: "Pastor", secretary: "Secretary",
+    teacher: "Teacher", member: "Member"
+  };
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
@@ -89,7 +97,7 @@ const AdminLayout = () => {
           </Button>
         </div>
         <nav className="flex-1 py-4 space-y-1 px-2 overflow-y-auto">
-          {sidebarItems.map((item) => {
+          {visibleItems.map((item) => {
             const isActive = location.pathname === item.href;
             return (
               <Link key={item.href} to={item.href}
@@ -118,7 +126,10 @@ const AdminLayout = () => {
           <h1 className="text-lg font-semibold text-foreground">
             {sidebarItems.find(i => i.href === location.pathname)?.title || "Dashboard"}
           </h1>
-          <div className="ml-auto text-sm text-muted-foreground">{user.email}</div>
+          <div className="ml-auto flex items-center gap-3 text-sm text-muted-foreground">
+            {role && <Badge variant="secondary">{roleLabel[role] || role}</Badge>}
+            <span>{user.email}</span>
+          </div>
         </header>
         <div className="p-6"><Outlet /></div>
       </main>

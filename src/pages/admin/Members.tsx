@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Search, Download, Trash2, Pencil } from "lucide-react";
+import { Plus, Search, Download, Trash2, Pencil, Eye, Phone, Mail, MapPin, Cake, Users as UsersIcon } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useUserRole, useBranches } from "@/hooks/use-user-role";
@@ -29,6 +29,7 @@ const Members = () => {
   const [loading, setLoading] = useState(true);
   const [form, setForm] = useState(emptyForm);
   const [editId, setEditId] = useState<string | null>(null);
+  const [profileMember, setProfileMember] = useState<any | null>(null);
   const { toast } = useToast();
 
   const branchFilter = isSuperAdmin ? (selectedBranch === "all" ? null : selectedBranch) : userBranch;
@@ -216,8 +217,9 @@ const Members = () => {
       <TableCell className="text-muted-foreground text-sm">{m.join_date || "—"}</TableCell>
       <TableCell>
                         <div className="flex gap-1">
-                          <Button variant="ghost" size="icon" onClick={() => handleEdit(m)}><Pencil className="h-4 w-4 text-primary" /></Button>
-                          <Button variant="ghost" size="icon" onClick={() => handleDelete(m.id)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
+                          <Button variant="ghost" size="icon" onClick={() => setProfileMember(m)} title="View profile"><Eye className="h-4 w-4 text-muted-foreground" /></Button>
+                          <Button variant="ghost" size="icon" onClick={() => handleEdit(m)} title="Edit"><Pencil className="h-4 w-4 text-primary" /></Button>
+                          <Button variant="ghost" size="icon" onClick={() => handleDelete(m.id)} title="Delete"><Trash2 className="h-4 w-4 text-destructive" /></Button>
                         </div>
                       </TableCell>
                     </TableRow>
@@ -228,6 +230,47 @@ const Members = () => {
           )}
         </CardContent>
       </Card>
+
+      {/* Member profile dialog */}
+      <Dialog open={!!profileMember} onOpenChange={(o) => !o && setProfileMember(null)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader><DialogTitle>Member Profile</DialogTitle></DialogHeader>
+          {profileMember && (
+            <div className="space-y-4">
+              <div className="flex items-center gap-3">
+                <div className="h-14 w-14 rounded-full bg-primary/10 flex items-center justify-center text-primary text-xl font-bold">
+                  {profileMember.name.split(' ').map((n: string) => n[0]).join('').slice(0,2)}
+                </div>
+                <div>
+                  <p className="font-bold text-lg text-foreground">{profileMember.name}</p>
+                  <div className="flex gap-2 mt-1">
+                    <Badge variant="outline">{profileMember.member_category || "Adult"}</Badge>
+                    {profileMember.gender && <Badge variant="secondary">{profileMember.gender}</Badge>}
+                  </div>
+                </div>
+              </div>
+              <div className="space-y-2 text-sm">
+                <div className="flex items-center gap-2"><Phone className="h-4 w-4 text-muted-foreground" /><span>{profileMember.phone}</span></div>
+                {profileMember.email && <div className="flex items-center gap-2"><Mail className="h-4 w-4 text-muted-foreground" /><span>{profileMember.email}</span></div>}
+                {profileMember.address && <div className="flex items-center gap-2"><MapPin className="h-4 w-4 text-muted-foreground" /><span>{profileMember.address}</span></div>}
+                {profileMember.date_of_birth && <div className="flex items-center gap-2"><Cake className="h-4 w-4 text-muted-foreground" /><span>{profileMember.date_of_birth}</span></div>}
+                {profileMember.department && <div className="flex items-center gap-2"><UsersIcon className="h-4 w-4 text-muted-foreground" /><span>{profileMember.department}</span></div>}
+                <div className="text-xs text-muted-foreground pt-2 border-t border-border">
+                  Branch: {branches.find(b => b.id === profileMember.branch_id)?.branch_name || "—"} • Joined: {profileMember.join_date || "—"}
+                </div>
+              </div>
+              <div className="flex gap-2">
+                <Button variant="outline" className="flex-1" onClick={() => { handleEdit(profileMember); setProfileMember(null); }}><Pencil className="h-4 w-4 mr-2" />Edit</Button>
+                {profileMember.phone && (
+                  <Button variant="outline" className="flex-1" asChild>
+                    <a href={`tel:${profileMember.phone}`}><Phone className="h-4 w-4 mr-2" />Call</a>
+                  </Button>
+                )}
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
