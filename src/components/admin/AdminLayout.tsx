@@ -97,7 +97,7 @@ const AdminLayout = () => {
           </Button>
         </div>
         <nav className="flex-1 py-4 space-y-1 px-2 overflow-y-auto">
-          {sidebarItems.map((item) => {
+          {visibleItems.map((item) => {
             const isActive = location.pathname === item.href;
             return (
               <Link key={item.href} to={item.href}
