@@ -16,6 +16,7 @@ const Analytics = () => {
   const [categoryData, setCategoryData] = useState<any[]>([]);
   const [financeData, setFinanceData] = useState<any[]>([]);
   const [attendanceData, setAttendanceData] = useState<any[]>([]);
+  const [branchComparison, setBranchComparison] = useState<any[]>([]);
 
   const branchFilter = isSuperAdmin ? (selectedBranch === "all" ? null : selectedBranch) : userBranch;
 
