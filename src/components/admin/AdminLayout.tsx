@@ -126,7 +126,10 @@ const AdminLayout = () => {
           <h1 className="text-lg font-semibold text-foreground">
             {sidebarItems.find(i => i.href === location.pathname)?.title || "Dashboard"}
           </h1>
-          <div className="ml-auto text-sm text-muted-foreground">{user.email}</div>
+          <div className="ml-auto flex items-center gap-3 text-sm text-muted-foreground">
+            {role && <Badge variant="secondary">{roleLabel[role] || role}</Badge>}
+            <span>{user.email}</span>
+          </div>
         </header>
         <div className="p-6"><Outlet /></div>
       </main>
