@@ -192,6 +192,30 @@ const Analytics = () => {
           </CardContent>
         </Card>
       </div>
+
+      {/* Branch comparison — Bishop only */}
+      {isSuperAdmin && branchComparison.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-sm flex items-center gap-2"><Building2 className="h-4 w-4 text-primary" />Branch Comparison</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={300}>
+              <BarChart data={branchComparison}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="branch" />
+                <YAxis yAxisId="left" />
+                <YAxis yAxisId="right" orientation="right" />
+                <Tooltip />
+                <Legend />
+                <Bar yAxisId="left" dataKey="members" fill="hsl(280, 85%, 45%)" name="Members" radius={[4,4,0,0]} />
+                <Bar yAxisId="left" dataKey="attendance" fill="hsl(45, 100%, 50%)" name="Avg Attendance" radius={[4,4,0,0]} />
+                <Bar yAxisId="right" dataKey="giving" fill="hsl(280, 60%, 60%)" name="Total Giving (KES)" radius={[4,4,0,0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 };
