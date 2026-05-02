@@ -78,7 +78,7 @@ const UserRoles = () => {
             <DialogContent>
               <DialogHeader><DialogTitle>Assign Role</DialogTitle></DialogHeader>
               <div className="space-y-4">
-                <div><Label>User ID (UUID)</Label><Input value={form.user_id} onChange={e => setForm({ ...form, user_id: e.target.value })} placeholder="Paste user UUID" /></div>
+                <div><Label>User Email</Label><Input type="email" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} placeholder="user@example.com" /></div>
                 <div><Label>Role</Label>
                   <Select value={form.role} onValueChange={v => setForm({ ...form, role: v })}>
                     <SelectTrigger><SelectValue placeholder="Select role" /></SelectTrigger>
@@ -86,6 +86,7 @@ const UserRoles = () => {
                       <SelectItem value="super_admin">Super Admin (Bishop)</SelectItem>
                       <SelectItem value="branch_admin">Branch Pastor</SelectItem>
                       <SelectItem value="secretary">Secretary</SelectItem>
+                      <SelectItem value="teacher">Sunday School Teacher</SelectItem>
                       <SelectItem value="member">Member</SelectItem>
                     </SelectContent>
                   </Select>
