@@ -29,6 +29,7 @@ const Members = () => {
   const [loading, setLoading] = useState(true);
   const [form, setForm] = useState(emptyForm);
   const [editId, setEditId] = useState<string | null>(null);
+  const [profileMember, setProfileMember] = useState<any | null>(null);
   const { toast } = useToast();
 
   const branchFilter = isSuperAdmin ? (selectedBranch === "all" ? null : selectedBranch) : userBranch;
