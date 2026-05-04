@@ -33,7 +33,7 @@ const Branches = () => {
     if (!form.branch_name) { toast({ title: "Branch name is required", variant: "destructive" }); return; }
     setSaving(true);
     try {
-      const { error } = await supabase.rpc("save_branch", {
+      const { error } = await (supabase as any).rpc("save_branch", {
         _branch_id: editId,
         _branch_name: form.branch_name,
         _location: form.location || null,
@@ -55,7 +55,7 @@ const Branches = () => {
   };
 
   const handleDelete = async (id: string) => {
-    const { error } = await supabase.rpc("delete_branch_by_id", { _branch_id: id });
+    const { error } = await (supabase as any).rpc("delete_branch_by_id", { _branch_id: id });
     if (error) { toast({ title: "Delete failed", description: error.message, variant: "destructive" }); return; }
     toast({ title: "Branch deleted" }); fetchBranches();
   };
