@@ -50,7 +50,7 @@ const UserRoles = () => {
     if (form.role !== "super_admin" && !form.branch_id) { toast({ title: "Branch is required", description: "Select the branch this user belongs to.", variant: "destructive" }); return; }
     setSaving(true);
     try {
-      const { error } = await supabase.rpc("assign_user_role_by_email", {
+      const { error } = await (supabase as any).rpc("assign_user_role_by_email", {
         _email: form.email.trim(),
         _role: form.role as any,
         _branch_id: form.role === "super_admin" ? null : form.branch_id,
@@ -65,7 +65,7 @@ const UserRoles = () => {
   };
 
   const handleDelete = async (id: string) => {
-    const { error } = await supabase.rpc("delete_user_role_by_id", { _role_id: id });
+    const { error } = await (supabase as any).rpc("delete_user_role_by_id", { _role_id: id });
     if (error) { toast({ title: "Role removal failed", description: error.message, variant: "destructive" }); return; }
     toast({ title: "Role removed" }); fetchRoles();
   };
