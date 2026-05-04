@@ -10,18 +10,25 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 
 const emptyForm = { branch_name: "", location: "", pastor_name: "" };
+const withTimeout = <T,>(promise: Promise<T>, ms = 12000) =>
+  Promise.race([
+    promise,
+    new Promise<never>((_, reject) => setTimeout(() => reject(new Error("The request timed out. Please check your connection and try again.")), ms)),
+  ]);
 
 const Branches = () => {
   const [branches, setBranches] = useState<any[]>([]);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
   const [form, setForm] = useState(emptyForm);
   const [editId, setEditId] = useState<string | null>(null);
   const { toast } = useToast();
 
   const fetchBranches = async () => {
-    const { data } = await supabase.from("branches").select("*").order("branch_name");
-    if (data) setBranches(data);
+    const { data, error } = await supabase.from("branches").select("*").order("branch_name");
+    if (error) toast({ title: "Could not load branches", description: error.message, variant: "destructive" });
+    else setBranches(data || []);
     setLoading(false);
   };
 
@@ -29,16 +36,22 @@ const Branches = () => {
 
   const handleSave = async () => {
     if (!form.branch_name) { toast({ title: "Branch name is required", variant: "destructive" }); return; }
-    if (editId) {
-      const { error } = await supabase.from("branches").update(form).eq("id", editId);
-      if (error) { toast({ title: "Error", description: error.message, variant: "destructive" }); return; }
-      toast({ title: "Branch updated" });
-    } else {
-      const { error } = await supabase.from("branches").insert(form);
-      if (error) { toast({ title: "Error", description: error.message, variant: "destructive" }); return; }
-      toast({ title: "Branch created" });
+    setSaving(true);
+    try {
+      const { error } = await withTimeout<any>((supabase as any).rpc("save_branch", {
+        _branch_id: editId,
+        _branch_name: form.branch_name,
+        _location: form.location || null,
+        _pastor_name: form.pastor_name || null,
+      }));
+      if (error) throw error;
+      toast({ title: editId ? "Branch updated" : "Branch created" });
+      setForm(emptyForm); setEditId(null); setDialogOpen(false); fetchBranches();
+    } catch (error: any) {
+      toast({ title: "Branch save failed", description: error.message || "Please check your role permission and try again.", variant: "destructive" });
+    } finally {
+      setSaving(false);
     }
-    setForm(emptyForm); setEditId(null); setDialogOpen(false); fetchBranches();
   };
 
   const handleEdit = (b: any) => {
@@ -47,7 +60,8 @@ const Branches = () => {
   };
 
   const handleDelete = async (id: string) => {
-    await supabase.from("branches").delete().eq("id", id);
+    const { error } = await withTimeout<any>((supabase as any).rpc("delete_branch_by_id", { _branch_id: id }));
+    if (error) { toast({ title: "Delete failed", description: error.message, variant: "destructive" }); return; }
     toast({ title: "Branch deleted" }); fetchBranches();
   };
 
@@ -67,7 +81,7 @@ const Branches = () => {
               <div><Label>Branch Name *</Label><Input value={form.branch_name} onChange={e => setForm({ ...form, branch_name: e.target.value })} /></div>
               <div><Label>Location</Label><Input value={form.location} onChange={e => setForm({ ...form, location: e.target.value })} /></div>
               <div><Label>Pastor Name</Label><Input value={form.pastor_name} onChange={e => setForm({ ...form, pastor_name: e.target.value })} /></div>
-              <Button onClick={handleSave} className="w-full bg-primary hover:bg-primary/90 text-primary-foreground">{editId ? "Update" : "Create"}</Button>
+              <Button onClick={handleSave} disabled={saving} className="w-full bg-primary hover:bg-primary/90 text-primary-foreground">{saving ? "Saving..." : editId ? "Update" : "Create"}</Button>
             </div>
           </DialogContent>
         </Dialog>

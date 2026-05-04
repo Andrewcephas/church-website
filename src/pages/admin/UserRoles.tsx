@@ -20,10 +20,17 @@ const roleLabels: Record<string, string> = {
   member: "Member",
 };
 
+const withTimeout = <T,>(promise: Promise<T>, ms = 12000) =>
+  Promise.race([
+    promise,
+    new Promise<never>((_, reject) => setTimeout(() => reject(new Error("The request timed out. Please check your connection and try again.")), ms)),
+  ]);
+
 const UserRoles = () => {
   const [roles, setRoles] = useState<any[]>([]);
   const [loginActivity, setLoginActivity] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [activityOpen, setActivityOpen] = useState(false);
   const [form, setForm] = useState({ email: "", role: "", branch_id: "" });
@@ -31,8 +38,9 @@ const UserRoles = () => {
   const { toast } = useToast();
 
   const fetchRoles = async () => {
-    const { data } = await supabase.from("user_roles").select("*, branches(branch_name)").order("created_at", { ascending: false });
-    if (data) setRoles(data);
+    const { data, error } = await supabase.from("user_roles").select("*, branches(branch_name)").order("created_at", { ascending: false });
+    if (error) toast({ title: "Could not load roles", description: error.message, variant: "destructive" });
+    else setRoles(data || []);
     setLoading(false);
   };
 
@@ -45,21 +53,26 @@ const UserRoles = () => {
 
   const handleAssign = async () => {
     if (!form.email || !form.role) { toast({ title: "Email and role required", variant: "destructive" }); return; }
-    // Lookup user by email
-    const { data: userId, error: lookupError } = await supabase.rpc("find_user_by_email", { _email: form.email.trim() });
-    if (lookupError || !userId) {
-      toast({ title: "User not found", description: "Make sure they have signed up first.", variant: "destructive" });
-      return;
+    if (form.role !== "super_admin" && !form.branch_id) { toast({ title: "Branch is required", description: "Select the branch this user belongs to.", variant: "destructive" }); return; }
+    setSaving(true);
+    try {
+      const { error } = await withTimeout<any>((supabase as any).rpc("assign_user_role_by_email", {
+        _email: form.email.trim(),
+        _role: form.role as any,
+        _branch_id: form.role === "super_admin" ? null : form.branch_id,
+      }));
+      if (error) throw error;
+      toast({ title: "Role assigned" }); setDialogOpen(false); setForm({ email: "", role: "", branch_id: "" }); fetchRoles();
+    } catch (error: any) {
+      toast({ title: "Role assignment failed", description: error.message || "Please check the user email, branch, and your permission.", variant: "destructive" });
+    } finally {
+      setSaving(false);
     }
-    const payload: any = { user_id: userId, role: form.role };
-    if (form.role !== "super_admin" && form.branch_id) payload.branch_id = form.branch_id;
-    const { error } = await supabase.from("user_roles").insert(payload);
-    if (error) { toast({ title: "Error", description: error.message, variant: "destructive" }); return; }
-    toast({ title: "Role assigned" }); setDialogOpen(false); setForm({ email: "", role: "", branch_id: "" }); fetchRoles();
   };
 
   const handleDelete = async (id: string) => {
-    await supabase.from("user_roles").delete().eq("id", id);
+    const { error } = await withTimeout<any>((supabase as any).rpc("delete_user_role_by_id", { _role_id: id }));
+    if (error) { toast({ title: "Role removal failed", description: error.message, variant: "destructive" }); return; }
     toast({ title: "Role removed" }); fetchRoles();
   };
 
@@ -99,7 +112,7 @@ const UserRoles = () => {
                     </Select>
                   </div>
                 )}
-                <Button onClick={handleAssign} className="w-full bg-primary hover:bg-primary/90 text-primary-foreground">Assign</Button>
+                <Button onClick={handleAssign} disabled={saving} className="w-full bg-primary hover:bg-primary/90 text-primary-foreground">{saving ? "Assigning..." : "Assign"}</Button>
               </div>
             </DialogContent>
           </Dialog>

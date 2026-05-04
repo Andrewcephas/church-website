@@ -597,10 +597,29 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      assign_user_role_by_email: {
+        Args: {
+          _branch_id?: string
+          _email: string
+          _role: Database["public"]["Enums"]["app_role"]
+        }
+        Returns: string
+      }
       can_access_branch: {
         Args: { _branch_id: string; _user_id: string }
         Returns: boolean
       }
+      can_manage_role: {
+        Args: {
+          _actor_id: string
+          _target_branch_id: string
+          _target_role: Database["public"]["Enums"]["app_role"]
+          _target_user_id?: string
+        }
+        Returns: boolean
+      }
+      delete_branch_by_id: { Args: { _branch_id: string }; Returns: boolean }
+      delete_user_role_by_id: { Args: { _role_id: string }; Returns: boolean }
       find_user_by_email: { Args: { _email: string }; Returns: string }
       get_user_branch_id: { Args: { _user_id: string }; Returns: string }
       has_any_super_admin: { Args: never; Returns: boolean }
@@ -614,6 +633,15 @@ export type Database = {
       is_class_teacher: {
         Args: { _class_id: string; _user_id: string }
         Returns: boolean
+      }
+      save_branch: {
+        Args: {
+          _branch_id: string
+          _branch_name: string
+          _location?: string
+          _pastor_name?: string
+        }
+        Returns: string
       }
     }
     Enums: {
