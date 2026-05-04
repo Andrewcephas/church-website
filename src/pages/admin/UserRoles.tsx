@@ -20,6 +20,12 @@ const roleLabels: Record<string, string> = {
   member: "Member",
 };
 
+const withTimeout = <T,>(promise: Promise<T>, ms = 12000) =>
+  Promise.race([
+    promise,
+    new Promise<never>((_, reject) => setTimeout(() => reject(new Error("The request timed out. Please check your connection and try again.")), ms)),
+  ]);
+
 const UserRoles = () => {
   const [roles, setRoles] = useState<any[]>([]);
   const [loginActivity, setLoginActivity] = useState<any[]>([]);
@@ -50,11 +56,11 @@ const UserRoles = () => {
     if (form.role !== "super_admin" && !form.branch_id) { toast({ title: "Branch is required", description: "Select the branch this user belongs to.", variant: "destructive" }); return; }
     setSaving(true);
     try {
-      const { error } = await (supabase as any).rpc("assign_user_role_by_email", {
+      const { error } = await withTimeout<any>((supabase as any).rpc("assign_user_role_by_email", {
         _email: form.email.trim(),
         _role: form.role as any,
         _branch_id: form.role === "super_admin" ? null : form.branch_id,
-      });
+      }));
       if (error) throw error;
       toast({ title: "Role assigned" }); setDialogOpen(false); setForm({ email: "", role: "", branch_id: "" }); fetchRoles();
     } catch (error: any) {
@@ -65,7 +71,7 @@ const UserRoles = () => {
   };
 
   const handleDelete = async (id: string) => {
-    const { error } = await (supabase as any).rpc("delete_user_role_by_id", { _role_id: id });
+    const { error } = await withTimeout<any>((supabase as any).rpc("delete_user_role_by_id", { _role_id: id }));
     if (error) { toast({ title: "Role removal failed", description: error.message, variant: "destructive" }); return; }
     toast({ title: "Role removed" }); fetchRoles();
   };
