@@ -603,6 +603,7 @@ export type Database = {
       }
       find_user_by_email: { Args: { _email: string }; Returns: string }
       get_user_branch_id: { Args: { _user_id: string }; Returns: string }
+      has_any_super_admin: { Args: never; Returns: boolean }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
