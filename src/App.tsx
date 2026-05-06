@@ -33,6 +33,7 @@ import SundaySchool from "@/pages/admin/SundaySchool";
 import UserRoles from "@/pages/admin/UserRoles";
 import Notices from "@/pages/admin/Notices";
 import Messages from "@/pages/admin/Messages";
+import Accounts from "@/pages/admin/Accounts";
 
 function App() {
   return (
@@ -69,6 +70,7 @@ function App() {
           <Route path="user-roles" element={<UserRoles />} />
           <Route path="notices" element={<Notices />} />
           <Route path="messages" element={<Messages />} />
+          <Route path="accounts" element={<Accounts />} />
         </Route>
 
         <Route path="*" element={<PublicLayout><NotFound /></PublicLayout>} />
