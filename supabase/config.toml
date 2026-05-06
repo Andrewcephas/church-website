@@ -1,1 +1,7 @@
 project_id = "sbpwgtyhtyvgfoffknei"
+
+[functions.manage-accounts]
+verify_jwt = false
+
+[functions.generate-quotes]
+verify_jwt = false

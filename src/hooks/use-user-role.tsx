@@ -20,14 +20,14 @@ export type ModuleKey =
   | "dashboard" | "branches" | "members" | "attendance" | "finance"
   | "events" | "sermons" | "sunday_school" | "notices" | "messages"
   | "communications" | "prayer_requests" | "social_quotes" | "user_roles"
-  | "analytics" | "settings";
+  | "analytics" | "settings" | "accounts";
 
 const PERMISSIONS: Record<AppRole, ModuleKey[]> = {
-  super_admin: ["dashboard","branches","members","attendance","finance","events","sermons","sunday_school","notices","messages","communications","prayer_requests","social_quotes","user_roles","analytics","settings"],
-  branch_admin: ["dashboard","members","attendance","finance","events","sermons","sunday_school","notices","messages","communications","prayer_requests","social_quotes","analytics","settings"],
-  secretary: ["dashboard","members","attendance","events","notices","communications","prayer_requests","social_quotes"],
-  teacher: ["dashboard","sunday_school","social_quotes"],
-  member: ["dashboard","social_quotes"],
+  super_admin: ["dashboard","branches","members","attendance","finance","events","sermons","sunday_school","notices","messages","communications","prayer_requests","social_quotes","user_roles","accounts","analytics","settings"],
+  branch_admin: ["dashboard","members","attendance","finance","events","sermons","sunday_school","notices","messages","communications","prayer_requests","social_quotes","accounts","analytics","settings"],
+  secretary: ["dashboard","members","attendance","events","notices","communications","prayer_requests","social_quotes","accounts"],
+  teacher: ["dashboard","sunday_school","social_quotes","accounts"],
+  member: ["dashboard","social_quotes","accounts"],
 };
 
 export const useUserRole = (): UserRole => {
