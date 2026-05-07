@@ -104,6 +104,37 @@ const Branches = () => {
     toast({ title: "Branch deleted" }); fetchBranches();
   };
 
+  const handleCreateAccount = async () => {
+    if (!acctBranch) return;
+    if (!acctForm.email || !acctForm.password) {
+      toast({ title: "Email and password required", variant: "destructive" }); return;
+    }
+    if (acctForm.password.length < 6) {
+      toast({ title: "Password must be at least 6 characters", variant: "destructive" }); return;
+    }
+    setAcctSaving(true);
+    try {
+      const { data, error } = await withTimeout<any>(
+        supabase.functions.invoke("manage-accounts", {
+          body: {
+            action: "create_user",
+            email: acctForm.email.trim(),
+            password: acctForm.password,
+            phone: acctForm.phone || null,
+            role: "branch_admin",
+            branch_id: acctBranch.id,
+          },
+        })
+      );
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      toast({ title: "Pastor account created", description: `${acctForm.email} can now log in.` });
+      setAcctBranch(null); setAcctForm(emptyAccount);
+    } catch (e: any) {
+      toast({ title: "Could not create account", description: e.message, variant: "destructive" });
+    } finally { setAcctSaving(false); }
+  };
+
   return (
     <div className="space-y-6 animate-fade-in">
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
