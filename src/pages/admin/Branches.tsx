@@ -30,6 +30,9 @@ const Branches = () => {
   const [showPwd, setShowPwd] = useState(false);
   const [form, setForm] = useState(emptyForm);
   const [editId, setEditId] = useState<string | null>(null);
+  const [acctBranch, setAcctBranch] = useState<any | null>(null);
+  const [acctForm, setAcctForm] = useState(emptyAccount);
+  const [acctSaving, setAcctSaving] = useState(false);
   const { toast } = useToast();
 
   const fetchBranches = async () => {
