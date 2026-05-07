@@ -25,7 +25,6 @@ import AdminSermons from "@/pages/admin/AdminSermons";
 import Communications from "@/pages/admin/Communications";
 import PrayerRequests from "@/pages/admin/PrayerRequests";
 import Analytics from "@/pages/admin/Analytics";
-import PrayerRequestForm from "@/pages/PrayerRequestForm";
 import Settings from "@/pages/admin/Settings";
 import SocialQuotes from "@/pages/admin/SocialQuotes";
 import Branches from "@/pages/admin/Branches";
@@ -34,57 +33,72 @@ import UserRoles from "@/pages/admin/UserRoles";
 import Notices from "@/pages/admin/Notices";
 import Messages from "@/pages/admin/Messages";
 import Accounts from "@/pages/admin/Accounts";
+import PrayerRequestForm from "@/pages/PrayerRequestForm";
+import { GradientOrbs } from "@/components/ui/BackgroundEffects";
+import "./App.css";
+import "@/components/ui/background-animations.css";
 
 function App() {
   return (
     <Router>
-      <Routes>
-        <Route path="/" element={<PublicLayout><Index /></PublicLayout>} />
-        <Route path="/about" element={<PublicLayout><About /></PublicLayout>} />
-        <Route path="/about/our-story" element={<PublicLayout><OurStory /></PublicLayout>} />
-        <Route path="/about/mission" element={<PublicLayout><Mission /></PublicLayout>} />
-        <Route path="/about/leadership" element={<PublicLayout><Leadership /></PublicLayout>} />
-        <Route path="/ministries" element={<PublicLayout><Ministries /></PublicLayout>} />
-        <Route path="/sermons" element={<PublicLayout><Sermons /></PublicLayout>} />
-        <Route path="/events" element={<PublicLayout><Events /></PublicLayout>} />
-        <Route path="/give" element={<PublicLayout><Give /></PublicLayout>} />
-        <Route path="/live" element={<PublicLayout><LiveStream /></PublicLayout>} />
-        <Route path="/contact" element={<PublicLayout><Contact /></PublicLayout>} />
-        <Route path="/prayer-request" element={<PublicLayout><PrayerRequestForm /></PublicLayout>} />
-        <Route path="/login" element={<Login />} />
+      <div className="min-h-screen bg-background relative">
+        {/* Background Effects */}
+        <div className="fixed inset-0 pointer-events-none z-0">
+          <GradientOrbs />
+          <div className="grid-pattern" />
+        </div>
+        
+        <div className="relative z-10">
+          <Routes>
+            <Route path="/" element={<PublicLayout><Index /></PublicLayout>} />
+            <Route path="/about" element={<PublicLayout><About /></PublicLayout>} />
+            <Route path="/about/our-story" element={<PublicLayout><OurStory /></PublicLayout>} />
+            <Route path="/about/mission" element={<PublicLayout><Mission /></PublicLayout>} />
+            <Route path="/about/leadership" element={<PublicLayout><Leadership /></PublicLayout>} />
+            <Route path="/ministries" element={<PublicLayout><Ministries /></PublicLayout>} />
+            <Route path="/sermons" element={<PublicLayout><Sermons /></PublicLayout>} />
+            <Route path="/events" element={<PublicLayout><Events /></PublicLayout>} />
+            <Route path="/give" element={<PublicLayout><Give /></PublicLayout>} />
+            <Route path="/live" element={<PublicLayout><LiveStream /></PublicLayout>} />
+            <Route path="/contact" element={<PublicLayout><Contact /></PublicLayout>} />
+            <Route path="/prayer-request" element={<PublicLayout><PrayerRequestForm /></PublicLayout>} />
+            <Route path="/login" element={<Login />} />
 
-        <Route path="/admin" element={<AdminLayout />}>
-          <Route index element={<Dashboard />} />
-          <Route path="members" element={<Members />} />
-          <Route path="attendance" element={<Attendance />} />
-          <Route path="finance" element={<Finance />} />
-          <Route path="events" element={<AdminEvents />} />
-          <Route path="sermons" element={<AdminSermons />} />
-          <Route path="communications" element={<Communications />} />
-          <Route path="prayer-requests" element={<PrayerRequests />} />
-          <Route path="analytics" element={<Analytics />} />
-          <Route path="settings" element={<Settings />} />
-          <Route path="social-quotes" element={<SocialQuotes />} />
-          <Route path="branches" element={<Branches />} />
-          <Route path="sunday-school" element={<SundaySchool />} />
-          <Route path="user-roles" element={<UserRoles />} />
-          <Route path="notices" element={<Notices />} />
-          <Route path="messages" element={<Messages />} />
-          <Route path="accounts" element={<Accounts />} />
-        </Route>
+            <Route path="/admin" element={<AdminLayout />}>
+              <Route index element={<Dashboard />} />
+              <Route path="members" element={<Members />} />
+              <Route path="attendance" element={<Attendance />} />
+              <Route path="finance" element={<Finance />} />
+              <Route path="events" element={<AdminEvents />} />
+              <Route path="sermons" element={<AdminSermons />} />
+              <Route path="communications" element={<Communications />} />
+              <Route path="prayer-requests" element={<PrayerRequests />} />
+              <Route path="analytics" element={<Analytics />} />
+              <Route path="settings" element={<Settings />} />
+              <Route path="social-quotes" element={<SocialQuotes />} />
+              <Route path="branches" element={<Branches />} />
+              <Route path="sunday-school" element={<SundaySchool />} />
+              <Route path="user-roles" element={<UserRoles />} />
+              <Route path="notices" element={<Notices />} />
+              <Route path="messages" element={<Messages />} />
+              <Route path="accounts" element={<Accounts />} />
+            </Route>
 
-        <Route path="*" element={<PublicLayout><NotFound /></PublicLayout>} />
-      </Routes>
-      <Toaster />
+            <Route path="*" element={<PublicLayout><NotFound /></PublicLayout>} />
+          </Routes>
+          
+          <Toaster />
+        </div>
+      </div>
     </Router>
   );
 }
 
 function PublicLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="min-h-screen bg-background flex flex-col">
+    <div className="min-h-screen bg-background flex flex-col relative">
       <Navigation />
-      <main className="flex-1">{children}</main>
+      <main className="flex-1 relative">{children}</main>
       <Footer />
     </div>
   );
