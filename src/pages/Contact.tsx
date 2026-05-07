@@ -1,7 +1,7 @@
 import { CardTitle, CardContent } from "@/components/ui/card";
 import { ModernCard } from "@/components/ui/modern-card";
 import { Button } from "@/components/ui/button";
-import { Phone, Mail, Clock, MessageSquare, ExternalLink, ChevronRight, MapPin } from "lucide-react";
+import { Phone, Mail, Clock, MessageSquare, ExternalLink, ChevronRight, MapPin, Play, Users } from "lucide-react";
 import { useSiteSettings } from "@/hooks/use-site-settings";
 import Navigation from "@/components/Navigation";
 

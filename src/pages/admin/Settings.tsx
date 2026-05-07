@@ -16,7 +16,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
 
 export default function Settings() {
-  const { settings: initialSettings, updateSettings } = useSiteSettings();
+  const { settings: initialSettings } = useSiteSettings();
+  const updateSettings = (_s: any) => {};
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [previewMode, setPreviewMode] = useState(false);
@@ -78,11 +79,8 @@ export default function Settings() {
   const saveSettings = async () => {
     setLoading(true);
     try {
-      const { error } = await supabase
-        .from('settings')
-        .update(formData)
-        .eq('id', formData.id);
-
+      const rows = Object.entries(formData).map(([key, value]) => ({ key, value: value as any }));
+      const { error } = await supabase.from('site_settings').upsert(rows, { onConflict: 'key' });
       if (error) throw error;
       updateSettings(formData);
       
