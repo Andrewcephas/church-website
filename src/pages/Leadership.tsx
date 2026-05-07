@@ -1,5 +1,6 @@
 import { CardTitle } from "@/components/ui/card";
 import { ModernCard } from "@/components/ui/modern-card";
+import { Button } from "@/components/ui/button";
 import { Mail, Phone, ChevronRight, MessageSquare, Zap } from "lucide-react";
 import Navigation from "@/components/Navigation";
 

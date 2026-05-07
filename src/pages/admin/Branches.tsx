@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Plus, Building2, Trash2, Pencil, Eye, EyeOff, Sparkles } from "lucide-react";
+import { Plus, Building2, Trash2, Pencil, Eye, EyeOff, Sparkles, KeyRound } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -14,6 +14,7 @@ const emptyForm = {
   branch_name: "", location: "", pastor_name: "",
   create_account: true, pastor_email: "", pastor_phone: "", pastor_password: "",
 };
+const emptyAccount = { email: "", phone: "", password: "" };
 
 const withTimeout = <T,>(promise: Promise<T>, ms = 15000) =>
   Promise.race([
@@ -29,6 +30,9 @@ const Branches = () => {
   const [showPwd, setShowPwd] = useState(false);
   const [form, setForm] = useState(emptyForm);
   const [editId, setEditId] = useState<string | null>(null);
+  const [acctBranch, setAcctBranch] = useState<any | null>(null);
+  const [acctForm, setAcctForm] = useState(emptyAccount);
+  const [acctSaving, setAcctSaving] = useState(false);
   const { toast } = useToast();
 
   const fetchBranches = async () => {
@@ -98,6 +102,37 @@ const Branches = () => {
     const { error } = await withTimeout<any>((supabase as any).rpc("delete_branch_by_id", { _branch_id: id }));
     if (error) { toast({ title: "Delete failed", description: error.message, variant: "destructive" }); return; }
     toast({ title: "Branch deleted" }); fetchBranches();
+  };
+
+  const handleCreateAccount = async () => {
+    if (!acctBranch) return;
+    if (!acctForm.email || !acctForm.password) {
+      toast({ title: "Email and password required", variant: "destructive" }); return;
+    }
+    if (acctForm.password.length < 6) {
+      toast({ title: "Password must be at least 6 characters", variant: "destructive" }); return;
+    }
+    setAcctSaving(true);
+    try {
+      const { data, error } = await withTimeout<any>(
+        supabase.functions.invoke("manage-accounts", {
+          body: {
+            action: "create_user",
+            email: acctForm.email.trim(),
+            password: acctForm.password,
+            phone: acctForm.phone || null,
+            role: "branch_admin",
+            branch_id: acctBranch.id,
+          },
+        })
+      );
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      toast({ title: "Pastor account created", description: `${acctForm.email} can now log in.` });
+      setAcctBranch(null); setAcctForm(emptyAccount);
+    } catch (e: any) {
+      toast({ title: "Could not create account", description: e.message, variant: "destructive" });
+    } finally { setAcctSaving(false); }
   };
 
   return (
@@ -181,6 +216,7 @@ const Branches = () => {
                         <p className="text-xs text-muted-foreground">Pastor: {b.pastor_name || "—"}</p>
                       </div>
                       <div className="flex gap-1">
+                        <Button variant="ghost" size="icon" title="Add Pastor Account" onClick={() => { setAcctBranch(b); setAcctForm(emptyAccount); }}><KeyRound className="h-4 w-4 text-primary" /></Button>
                         <Button variant="ghost" size="icon" onClick={() => handleEdit(b)}><Pencil className="h-4 w-4 text-primary" /></Button>
                         <Button variant="ghost" size="icon" onClick={() => handleDelete(b.id)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
                       </div>
@@ -200,6 +236,7 @@ const Branches = () => {
                         <TableCell>{b.pastor_name || "—"}</TableCell>
                         <TableCell>
                           <div className="flex gap-1">
+                            <Button variant="ghost" size="icon" title="Add Pastor Account" onClick={() => { setAcctBranch(b); setAcctForm(emptyAccount); }}><KeyRound className="h-4 w-4 text-primary" /></Button>
                             <Button variant="ghost" size="icon" onClick={() => handleEdit(b)}><Pencil className="h-4 w-4 text-primary" /></Button>
                             <Button variant="ghost" size="icon" onClick={() => handleDelete(b.id)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
                           </div>
@@ -213,6 +250,22 @@ const Branches = () => {
           )}
         </CardContent>
       </Card>
+
+      {/* Add account for existing branch */}
+      <Dialog open={!!acctBranch} onOpenChange={(o) => { if (!o) setAcctBranch(null); }}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2"><KeyRound className="h-5 w-5 text-primary" />Add Pastor Account</DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-muted-foreground">Create login for branch <span className="font-semibold text-foreground">{acctBranch?.branch_name}</span></p>
+          <div className="space-y-3">
+            <div><Label>Pastor Email *</Label><Input type="email" value={acctForm.email} onChange={e => setAcctForm({ ...acctForm, email: e.target.value })} /></div>
+            <div><Label>Phone</Label><Input value={acctForm.phone} onChange={e => setAcctForm({ ...acctForm, phone: e.target.value, password: acctForm.password || e.target.value })} /></div>
+            <div><Label>Password * (min 6)</Label><Input type="text" value={acctForm.password} onChange={e => setAcctForm({ ...acctForm, password: e.target.value })} /></div>
+            <Button onClick={handleCreateAccount} disabled={acctSaving} className="w-full">{acctSaving ? "Creating..." : "Create Account"}</Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

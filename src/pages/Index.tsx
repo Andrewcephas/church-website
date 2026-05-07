@@ -122,7 +122,7 @@ const Index = () => {
         </section>
 
         {/* Latest Message */}
-        {settings.sermons?.length > 0 && (
+        {(settings as any).sermons?.length > 0 && (
           <section className="py-32 px-4 relative overflow-hidden bg-zinc-50 dark:bg-zinc-900/20">
             <div className="container mx-auto relative z-10">
               <div className="flex flex-col md:flex-row items-end justify-between mb-20 gap-8">
@@ -134,7 +134,7 @@ const Index = () => {
               </div>
               
               <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-10">
-                {settings.sermons?.slice(0, 3).map((s, i) => (
+                {(settings as any).sermons?.slice(0, 3).map((s: any, i: number) => (
                   <ModernCard 
                     key={i} 
                     variant="default"
