@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Plus, Building2, Trash2, Pencil, Eye, EyeOff, Sparkles } from "lucide-react";
+import { Plus, Building2, Trash2, Pencil, Eye, EyeOff, Sparkles, KeyRound } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -14,6 +14,7 @@ const emptyForm = {
   branch_name: "", location: "", pastor_name: "",
   create_account: true, pastor_email: "", pastor_phone: "", pastor_password: "",
 };
+const emptyAccount = { email: "", phone: "", password: "" };
 
 const withTimeout = <T,>(promise: Promise<T>, ms = 15000) =>
   Promise.race([
