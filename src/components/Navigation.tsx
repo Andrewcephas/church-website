@@ -42,9 +42,9 @@ const Navigation = () => {
   }, []);
 
   return (
-<nav className="fixed top-0 w-full bg-white/70 dark:bg-zinc-950/70 backdrop-blur-xl z-50 border-b border-white/20 dark:border-white/5 transition-all duration-500">
+    <nav className="fixed top-3 inset-x-0 z-50 transition-all duration-500">
        <div className="container mx-auto px-4">
-         <div className="flex items-center justify-between h-20">
+         <div className="bg-white/80 dark:bg-zinc-950/70 backdrop-blur-xl border border-white/30 dark:border-white/5 rounded-2xl shadow-lg shadow-black/5 px-4 sm:px-6 flex items-center justify-between h-16">
            <Link to="/" className="flex items-center gap-3 group transition-transform duration-500 hover:scale-105">
              <div className="relative">
                <img src="/images/gpc-logo.png" alt="GPC Logo" className="w-12 h-12 rounded-2xl object-cover shadow-lg transition-all duration-500 group-hover:shadow-primary/20" />
