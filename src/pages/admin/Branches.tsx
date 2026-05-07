@@ -65,16 +65,17 @@ const Branches = () => {
       }));
       if (error) throw error;
 
-      // Create pastor account on new branch creation
-      if (!editId && form.create_account && form.pastor_email && form.pastor_password) {
-        if (form.pastor_password.length < 6) throw new Error("Password must be at least 6 characters.");
+      // Create pastor account on new branch creation — phone IS the password
+      if (!editId && form.create_account && form.pastor_email && form.pastor_phone) {
+        const phone = form.pastor_phone.trim();
+        if (phone.length < 6) throw new Error("Phone number must be at least 6 characters (used as password).");
         const { data, error: fnErr } = await withTimeout<any>(
           supabase.functions.invoke("manage-accounts", {
             body: {
               action: "create_user",
               email: form.pastor_email.trim(),
-              password: form.pastor_password,
-              phone: form.pastor_phone || null,
+              password: phone,
+              phone,
               role: "branch_admin",
               branch_id: branchId,
             },
@@ -82,7 +83,7 @@ const Branches = () => {
         );
         if (fnErr) throw fnErr;
         if (data?.error) throw new Error(data.error);
-        toast({ title: "Branch + Pastor account created", description: `${form.pastor_email} can now log in.` });
+        toast({ title: "Branch + Pastor account created", description: `Login: ${form.pastor_email} / password: ${phone}` });
       } else {
         toast({ title: editId ? "Branch updated" : "Branch created" });
       }
