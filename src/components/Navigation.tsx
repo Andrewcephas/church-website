@@ -90,7 +90,7 @@ const Navigation = () => {
                  <Play className="h-4 w-4 mr-2 fill-current" />Watch Live
                </Button>
              </a>
-             <Link to="/contact">
+             <Link to="/quote">
                <Button className="h-11 px-6 bg-primary hover:bg-primary-dark text-white rounded-xl font-bold shadow-lg shadow-primary/20 transition-all hover:scale-105">
                  Get a Quote
                </Button>

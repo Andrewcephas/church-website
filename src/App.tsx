@@ -34,6 +34,7 @@ import Notices from "@/pages/admin/Notices";
 import Messages from "@/pages/admin/Messages";
 import Accounts from "@/pages/admin/Accounts";
 import PrayerRequestForm from "@/pages/PrayerRequestForm";
+import QuoteGenerator from "@/pages/QuoteGenerator";
 import { GradientOrbs } from "@/components/ui/BackgroundEffects";
 import "./App.css";
 import "@/components/ui/background-animations.css";
@@ -62,6 +63,7 @@ function App() {
             <Route path="/live" element={<PublicLayout><LiveStream /></PublicLayout>} />
             <Route path="/contact" element={<PublicLayout><Contact /></PublicLayout>} />
             <Route path="/prayer-request" element={<PublicLayout><PrayerRequestForm /></PublicLayout>} />
+            <Route path="/quote" element={<PublicLayout><QuoteGenerator /></PublicLayout>} />
             <Route path="/login" element={<Login />} />
 
             <Route path="/admin" element={<AdminLayout />}>
