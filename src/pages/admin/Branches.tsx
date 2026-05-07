@@ -65,16 +65,17 @@ const Branches = () => {
       }));
       if (error) throw error;
 
-      // Create pastor account on new branch creation
-      if (!editId && form.create_account && form.pastor_email && form.pastor_password) {
-        if (form.pastor_password.length < 6) throw new Error("Password must be at least 6 characters.");
+      // Create pastor account on new branch creation — phone IS the password
+      if (!editId && form.create_account && form.pastor_email && form.pastor_phone) {
+        const phone = form.pastor_phone.trim();
+        if (phone.length < 6) throw new Error("Phone number must be at least 6 characters (used as password).");
         const { data, error: fnErr } = await withTimeout<any>(
           supabase.functions.invoke("manage-accounts", {
             body: {
               action: "create_user",
               email: form.pastor_email.trim(),
-              password: form.pastor_password,
-              phone: form.pastor_phone || null,
+              password: phone,
+              phone,
               role: "branch_admin",
               branch_id: branchId,
             },
@@ -82,7 +83,7 @@ const Branches = () => {
         );
         if (fnErr) throw fnErr;
         if (data?.error) throw new Error(data.error);
-        toast({ title: "Branch + Pastor account created", description: `${form.pastor_email} can now log in.` });
+        toast({ title: "Branch + Pastor account created", description: `Login: ${form.pastor_email} / password: ${phone}` });
       } else {
         toast({ title: editId ? "Branch updated" : "Branch created" });
       }
@@ -174,16 +175,15 @@ const Branches = () => {
                   {form.create_account && (
                     <div className="space-y-3">
                       <div><Label>Pastor Email *</Label><Input type="email" value={form.pastor_email} onChange={e => setForm({ ...form, pastor_email: e.target.value })} placeholder="pastor@example.com" /></div>
-                      <div><Label>Phone Number</Label><Input value={form.pastor_phone} onChange={e => onPhoneChange(e.target.value)} placeholder="+254..." /></div>
                       <div>
-                        <Label>Password (default: phone)</Label>
+                        <Label>Phone Number * (used as password)</Label>
                         <div className="relative">
-                          <Input type={showPwd ? "text" : "password"} value={form.pastor_password} onChange={e => setForm({ ...form, pastor_password: e.target.value })} placeholder="At least 6 characters" />
+                          <Input type={showPwd ? "text" : "password"} value={form.pastor_phone} onChange={e => onPhoneChange(e.target.value)} placeholder="+254..." />
                           <button type="button" onClick={() => setShowPwd(s => !s)} className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
                             {showPwd ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                           </button>
                         </div>
-                        <p className="text-xs text-muted-foreground mt-1">Pastor will log in with email + password. Minimum 6 characters.</p>
+                        <p className="text-xs text-muted-foreground mt-1">Pastor will log in with this email + phone number as password (min 6 chars).</p>
                       </div>
                     </div>
                   )}
