@@ -216,6 +216,7 @@ const Branches = () => {
                         <p className="text-xs text-muted-foreground">Pastor: {b.pastor_name || "—"}</p>
                       </div>
                       <div className="flex gap-1">
+                        <Button variant="ghost" size="icon" title="Add Pastor Account" onClick={() => { setAcctBranch(b); setAcctForm(emptyAccount); }}><KeyRound className="h-4 w-4 text-primary" /></Button>
                         <Button variant="ghost" size="icon" onClick={() => handleEdit(b)}><Pencil className="h-4 w-4 text-primary" /></Button>
                         <Button variant="ghost" size="icon" onClick={() => handleDelete(b.id)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
                       </div>
@@ -235,6 +236,7 @@ const Branches = () => {
                         <TableCell>{b.pastor_name || "—"}</TableCell>
                         <TableCell>
                           <div className="flex gap-1">
+                            <Button variant="ghost" size="icon" title="Add Pastor Account" onClick={() => { setAcctBranch(b); setAcctForm(emptyAccount); }}><KeyRound className="h-4 w-4 text-primary" /></Button>
                             <Button variant="ghost" size="icon" onClick={() => handleEdit(b)}><Pencil className="h-4 w-4 text-primary" /></Button>
                             <Button variant="ghost" size="icon" onClick={() => handleDelete(b.id)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
                           </div>
@@ -248,6 +250,22 @@ const Branches = () => {
           )}
         </CardContent>
       </Card>
+
+      {/* Add account for existing branch */}
+      <Dialog open={!!acctBranch} onOpenChange={(o) => { if (!o) setAcctBranch(null); }}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2"><KeyRound className="h-5 w-5 text-primary" />Add Pastor Account</DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-muted-foreground">Create login for branch <span className="font-semibold text-foreground">{acctBranch?.branch_name}</span></p>
+          <div className="space-y-3">
+            <div><Label>Pastor Email *</Label><Input type="email" value={acctForm.email} onChange={e => setAcctForm({ ...acctForm, email: e.target.value })} /></div>
+            <div><Label>Phone</Label><Input value={acctForm.phone} onChange={e => setAcctForm({ ...acctForm, phone: e.target.value, password: acctForm.password || e.target.value })} /></div>
+            <div><Label>Password * (min 6)</Label><Input type="text" value={acctForm.password} onChange={e => setAcctForm({ ...acctForm, password: e.target.value })} /></div>
+            <Button onClick={handleCreateAccount} disabled={acctSaving} className="w-full">{acctSaving ? "Creating..." : "Create Account"}</Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
