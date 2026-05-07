@@ -175,16 +175,15 @@ const Branches = () => {
                   {form.create_account && (
                     <div className="space-y-3">
                       <div><Label>Pastor Email *</Label><Input type="email" value={form.pastor_email} onChange={e => setForm({ ...form, pastor_email: e.target.value })} placeholder="pastor@example.com" /></div>
-                      <div><Label>Phone Number</Label><Input value={form.pastor_phone} onChange={e => onPhoneChange(e.target.value)} placeholder="+254..." /></div>
                       <div>
-                        <Label>Password (default: phone)</Label>
+                        <Label>Phone Number * (used as password)</Label>
                         <div className="relative">
-                          <Input type={showPwd ? "text" : "password"} value={form.pastor_password} onChange={e => setForm({ ...form, pastor_password: e.target.value })} placeholder="At least 6 characters" />
+                          <Input type={showPwd ? "text" : "password"} value={form.pastor_phone} onChange={e => onPhoneChange(e.target.value)} placeholder="+254..." />
                           <button type="button" onClick={() => setShowPwd(s => !s)} className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
                             {showPwd ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                           </button>
                         </div>
-                        <p className="text-xs text-muted-foreground mt-1">Pastor will log in with email + password. Minimum 6 characters.</p>
+                        <p className="text-xs text-muted-foreground mt-1">Pastor will log in with this email + phone number as password (min 6 chars).</p>
                       </div>
                     </div>
                   )}
