@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Download, Sparkles, Copy } from "lucide-react";
@@ -24,8 +23,8 @@ const SocialQuotes = () => {
       });
       if (error) throw error;
       setQuotes(data.quotes || []);
-    } catch {
-      toast({ title: "Error generating quotes", variant: "destructive" });
+    } catch (error: any) {
+      toast({ title: "Error generating quotes", description: error.message || "Please try again.", variant: "destructive" });
     }
     setLoading(false);
   };
@@ -79,7 +78,10 @@ const SocialQuotes = () => {
     // Church name
     ctx.fillStyle = "#d4a843";
     ctx.font = "bold 28px sans-serif";
-    ctx.fillText("— Global Power Church", 540, 940);
+    ctx.fillText("— Global Power Church", 540, 900);
+    ctx.fillStyle = "#ffffff";
+    ctx.font = "italic 24px sans-serif";
+    ctx.fillText("globalpowerchurch.co.ke", 540, 950);
 
     const link = document.createElement("a");
     link.download = `gpc-quote-${index + 1}.png`;
