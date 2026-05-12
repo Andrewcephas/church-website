@@ -81,16 +81,25 @@ Deno.serve(async (req) => {
       if (!email || !password) return json(400, { error: "Email and password are required." });
       if (password.length < 6) return json(400, { error: "Password must be at least 6 characters." });
 
-      const { data: created, error } = await admin.auth.admin.createUser({
-        email, password, phone, email_confirm: true,
+      const created = await admin.auth.admin.createUser({
+        email, password, email_confirm: true,
         user_metadata: { phone, created_by: caller.id },
       });
-      if (error) return json(400, { error: error.message });
 
-      const newId = created.user!.id;
-      const { error: rErr } = await admin.from("user_roles").upsert(
+      let newId = created.data.user?.id;
+      if (created.error) {
+        const existing = await admin.auth.admin.listUsers({ page: 1, perPage: 1000 });
+        const found = existing.data?.users.find((u) => u.email?.toLowerCase() === email);
+        if (!found) return json(400, { error: created.error.message });
+        newId = found.id;
+        const { error: updateErr } = await admin.auth.admin.updateUserById(newId, { password, user_metadata: { phone, updated_by: caller.id } });
+        if (updateErr) return json(400, { error: updateErr.message });
+      }
+
+      const { error: deleteOldErr } = await admin.from("user_roles").delete().eq("user_id", newId).eq("role", role);
+      if (deleteOldErr) return json(400, { error: deleteOldErr.message });
+      const { error: rErr } = await admin.from("user_roles").insert(
         { user_id: newId, role, branch_id: role === "super_admin" ? null : branch_id },
-        { onConflict: "user_id,role" },
       );
       if (rErr) return json(400, { error: rErr.message });
       return json(200, { ok: true, user_id: newId });
