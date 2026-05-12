@@ -5,8 +5,10 @@ export interface SiteSettings {
   phone: string;
   email: string;
   whatsapp: string;
+  website_url: string;
   youtube_url: string;
   facebook_url: string;
+  theme_colors?: Record<string, string>;
   services: { title: string; day: string; time: string; description: string }[];
   ministries: { title: string; description: string }[];
 }
@@ -15,8 +17,10 @@ const defaults: SiteSettings = {
   phone: "0704129211",
   email: "paulndolo1972@gmail.com",
   whatsapp: "254704129211",
+  website_url: "https://globalpowerchurch.co.ke",
   youtube_url: "https://www.youtube.com/@GLOBALPOWERCHURCH",
   facebook_url: "https://www.facebook.com/groups/1202497280341977",
+  theme_colors: {},
   services: [
     { title: "Sunday Service", day: "Every Sunday", time: "Main Service", description: "Main Sunday Service" },
     { title: "Thursday Prayers", day: "Every Thursday", time: "4:00–6:00 PM", description: "Prayer Meeting" },
@@ -50,6 +54,11 @@ export function useSiteSettings() {
             (merged as any)[row.key] = row.value;
           }
         });
+        if (merged.theme_colors && typeof merged.theme_colors === "object") {
+          Object.entries(merged.theme_colors).forEach(([key, value]) => {
+            if (key.startsWith("--") && typeof value === "string") document.documentElement.style.setProperty(key, value);
+          });
+        }
         setSettings(merged);
       }
       setLoading(false);
