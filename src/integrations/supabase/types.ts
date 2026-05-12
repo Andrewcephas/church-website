@@ -291,6 +291,7 @@ export type Database = {
           content: string
           created_at: string | null
           id: string
+          image_url: string | null
           is_global: boolean | null
           title: string
           updated_at: string | null
@@ -301,6 +302,7 @@ export type Database = {
           content: string
           created_at?: string | null
           id?: string
+          image_url?: string | null
           is_global?: boolean | null
           title: string
           updated_at?: string | null
@@ -311,6 +313,7 @@ export type Database = {
           content?: string
           created_at?: string | null
           id?: string
+          image_url?: string | null
           is_global?: boolean | null
           title?: string
           updated_at?: string | null
