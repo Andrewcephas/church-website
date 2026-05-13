@@ -257,6 +257,43 @@ export default function Settings() {
           </CardContent>
         </Card>
 
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <ImageIcon className="h-5 w-5" />
+              Ministries
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {(formData.ministries || []).map((ministry, index) => (
+              <div key={index} className="grid gap-3 rounded-lg border border-border p-3 sm:grid-cols-[1fr_2fr_auto]">
+                <div className="space-y-2">
+                  <Label>Ministry name</Label>
+                  <Input value={ministry.title} onChange={(e) => {
+                    const ministries = [...(formData.ministries || [])];
+                    ministries[index] = { ...ministries[index], title: e.target.value };
+                    setFormData({ ...formData, ministries });
+                  }} />
+                </div>
+                <div className="space-y-2">
+                  <Label>Description</Label>
+                  <Textarea value={ministry.description} onChange={(e) => {
+                    const ministries = [...(formData.ministries || [])];
+                    ministries[index] = { ...ministries[index], description: e.target.value };
+                    setFormData({ ...formData, ministries });
+                  }} rows={2} />
+                </div>
+                <Button type="button" variant="ghost" size="icon" className="self-end" onClick={() => setFormData({ ...formData, ministries: (formData.ministries || []).filter((_, i) => i !== index) })}>
+                  <Trash2 className="h-4 w-4 text-destructive" />
+                </Button>
+              </div>
+            ))}
+            <Button type="button" variant="outline" onClick={() => setFormData({ ...formData, ministries: [...(formData.ministries || []), { title: "", description: "" }] })}>
+              <Plus className="h-4 w-4 mr-2" />Add Ministry
+            </Button>
+          </CardContent>
+        </Card>
+
         <div className="flex justify-end gap-2">
           <Button variant="outline" onClick={resetToDefault}>
             Reset Colors
