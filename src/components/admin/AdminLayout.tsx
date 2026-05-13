@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useUserRole, type ModuleKey } from "@/hooks/use-user-role";
+import LogoLoader from "@/components/LogoLoader";
 import {
   LayoutDashboard, Users, ClipboardCheck, DollarSign, Calendar, Book,
   MessageSquare, Heart, BarChart3, LogOut, Menu, ChevronLeft, Settings, Sparkles,
@@ -75,7 +76,7 @@ const AdminLayout = () => {
 
   const handleLogout = async () => { await supabase.auth.signOut(); navigate("/login"); };
 
-  if (loading) return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
+  if (loading) return <LogoLoader label="Loading admin..." />;
   if (!user) return null;
 
   const SidebarInner = () => (
