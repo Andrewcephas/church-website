@@ -79,8 +79,10 @@ const Messages = () => {
   const getAdminLabel = (userId: string) => {
     const admin = admins.find(a => a.user_id === userId);
     if (!admin) return userId.slice(0, 8) + "...";
-    const label = admin.role === "super_admin" ? "Bishop" : admin.role === "branch_admin" ? "Pastor" : admin.role === "secretary" ? "Secretary" : "Teacher";
-    return `${label} ${admin.branch_name ? `(${admin.branch_name})` : ""}`;
+    const roleLabel = admin.role === "super_admin" ? "Bishop" : admin.role === "branch_admin" ? "Pastor" : admin.role === "secretary" ? "Secretary" : "Teacher";
+    const nameStr = admin.name || admin.email || "Unknown User";
+    const branchStr = admin.branch_name ? ` - ${admin.branch_name}` : "";
+    return `${nameStr} (${roleLabel}${branchStr})`;
   };
 
   return (
