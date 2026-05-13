@@ -3,14 +3,16 @@ import { useSiteSettings, type SiteSettings } from "@/hooks/use-site-settings";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
 import { 
   Save, 
   Palette, 
   Image as ImageIcon, 
-  Eye,
-  RefreshCw
+  RefreshCw,
+  Plus,
+  Trash2
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
@@ -24,8 +26,11 @@ export default function Settings() {
   const [colorSettings, setColorSettings] = useState<any[]>([]);
   const [formData, setFormData] = useState(initialSettings);
 
+  const normalizeHsl = (value: string) => value.replace(/^hsl\(/, "").replace(/\)$/, "").trim();
+
   useEffect(() => {
     const root = getComputedStyle(document.documentElement);
+    const savedColors = initialSettings.theme_colors || {};
     const colors = [
       { name: 'Primary', key: '--primary', value: root.getPropertyValue('--primary').trim(), category: 'primary', hsl: '217 100% 50%' },
       { name: 'Primary Light', key: '--primary-light', value: root.getPropertyValue('--primary-light').trim(), category: 'primary', hsl: '217 100% 60%' },
@@ -35,8 +40,9 @@ export default function Settings() {
       { name: 'Background', key: '--background', value: root.getPropertyValue('--background').trim(), category: 'background', hsl: '0 0% 100%' },
       { name: 'Foreground', key: '--foreground', value: root.getPropertyValue('--foreground').trim(), category: 'text', hsl: '240 10% 10%' },
     ];
-    setColorSettings(colors);
-  }, []);
+    setColorSettings(colors.map(c => ({ ...c, hsl: normalizeHsl((savedColors as any)[c.key] || c.value || c.hsl) })));
+    setFormData(initialSettings);
+  }, [initialSettings]);
 
   const handleColorChange = (key: string, hslValue: string) => {
     setColorSettings(prev => 
@@ -79,16 +85,15 @@ export default function Settings() {
   const saveSettings = async () => {
     setLoading(true);
     try {
-      const rows = Object.entries(formData).map(([key, value]) => ({ key, value: value as any }));
-      const { error } = await supabase.from('site_settings').upsert(rows, { onConflict: 'key' });
-      if (error) throw error;
-      updateSettings(formData);
-      
-      // Save color preferences
       const colorVars = colorSettings.reduce((acc, c) => {
         acc[c.key] = `hsl(${c.hsl})`;
         return acc;
       }, {} as any);
+      const settingsToSave = { ...formData, theme_colors: colorVars };
+      const rows = Object.entries(settingsToSave).map(([key, value]) => ({ key, value: value as any }));
+      const { error } = await supabase.from('site_settings').upsert(rows, { onConflict: 'key' });
+      if (error) throw error;
+      updateSettings(settingsToSave);
       
       // Apply all colors permanently
       Object.entries(colorVars).forEach(([key, value]) => {
