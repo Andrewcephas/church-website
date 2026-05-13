@@ -200,6 +200,16 @@ export default function Settings() {
           <CardContent className="space-y-4">
             <div className="grid sm:grid-cols-2 gap-4">
               <div className="space-y-2">
+                <Label htmlFor="website_url">Website</Label>
+                <Input
+                  id="website_url"
+                  name="website_url"
+                  value={formData.website_url}
+                  onChange={(e) => setFormData({...formData, website_url: e.target.value})}
+                  placeholder="https://globalpowerchurch.co.ke"
+                />
+              </div>
+              <div className="space-y-2">
                 <Label htmlFor="youtube_url">YouTube Channel</Label>
                 <Input
                   id="youtube_url"
