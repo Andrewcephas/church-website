@@ -1,5 +1,5 @@
 import { Toaster } from "@/components/ui/toaster";
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import Index from "@/pages/Index";
@@ -64,6 +64,7 @@ function App() {
             <Route path="/contact" element={<PublicLayout><Contact /></PublicLayout>} />
             <Route path="/prayer-request" element={<PublicLayout><PrayerRequestForm /></PublicLayout>} />
             <Route path="/quote" element={<PublicLayout><QuoteGenerator /></PublicLayout>} />
+            <Route path="/admin/*" element={<Navigate to="/login" replace />} />
             <Route path="/login" element={<Login />} />
 
             <Route path="/admin" element={<AdminLayout />}>
