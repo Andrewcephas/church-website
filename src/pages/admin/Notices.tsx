@@ -7,7 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Bell, Trash2, Pencil } from "lucide-react";
+import { Plus, Bell, Trash2, Pencil, Image as ImageIcon } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useUserRole, useBranches } from "@/hooks/use-user-role";
@@ -20,7 +20,8 @@ const Notices = () => {
   const [notices, setNotices] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [form, setForm] = useState({ title: "", content: "", is_global: false, branch_id: "" });
+  const [form, setForm] = useState({ title: "", content: "", is_global: false, branch_id: "", image_url: "" });
+  const [imageFile, setImageFile] = useState<File | null>(null);
   const [editId, setEditId] = useState<string | null>(null);
   const { toast } = useToast();
 
@@ -40,10 +41,19 @@ const Notices = () => {
     if (!form.title || !form.content) { toast({ title: "Title and content required", variant: "destructive" }); return; }
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
+    let imageUrl = form.image_url;
+    if (imageFile) {
+      const ext = imageFile.name.split(".").pop() || "jpg";
+      const path = `${user.id}/${Date.now()}.${ext}`;
+      const { error: uploadError } = await supabase.storage.from("notice-images").upload(path, imageFile, { upsert: true });
+      if (uploadError) { toast({ title: "Image upload failed", description: uploadError.message, variant: "destructive" }); return; }
+      imageUrl = supabase.storage.from("notice-images").getPublicUrl(path).data.publicUrl;
+    }
     const payload: any = {
       title: form.title, content: form.content,
       is_global: isSuperAdmin ? form.is_global : false,
       branch_id: form.is_global ? null : (form.branch_id || userBranch || null),
+      image_url: imageUrl || null,
       user_id: user.id
     };
 
@@ -54,11 +64,12 @@ const Notices = () => {
       await supabase.from("notices").insert(payload);
       toast({ title: "Notice posted" });
     }
-    setForm({ title: "", content: "", is_global: false, branch_id: "" }); setEditId(null); setDialogOpen(false); fetchNotices();
+    setForm({ title: "", content: "", is_global: false, branch_id: "", image_url: "" }); setImageFile(null); setEditId(null); setDialogOpen(false); fetchNotices();
   };
 
   const handleEdit = (n: any) => {
-    setForm({ title: n.title, content: n.content, is_global: n.is_global || false, branch_id: n.branch_id || "" });
+    setForm({ title: n.title, content: n.content, is_global: n.is_global || false, branch_id: n.branch_id || "", image_url: n.image_url || "" });
+    setImageFile(null);
     setEditId(n.id); setDialogOpen(true);
   };
 
@@ -73,13 +84,18 @@ const Notices = () => {
         <h2 className="text-xl font-bold text-foreground">Notices</h2>
         <div className="flex gap-2 items-center">
           {isSuperAdmin && <BranchSelector value={selectedBranch} onChange={setSelectedBranch} />}
-          <Dialog open={dialogOpen} onOpenChange={(o) => { setDialogOpen(o); if (!o) { setEditId(null); setForm({ title: "", content: "", is_global: false, branch_id: "" }); } }}>
+          <Dialog open={dialogOpen} onOpenChange={(o) => { setDialogOpen(o); if (!o) { setEditId(null); setImageFile(null); setForm({ title: "", content: "", is_global: false, branch_id: "", image_url: "" }); } }}>
             <DialogTrigger asChild><Button className="bg-primary hover:bg-primary/90 text-primary-foreground"><Plus className="h-4 w-4 mr-2" />Add Notice</Button></DialogTrigger>
             <DialogContent>
               <DialogHeader><DialogTitle>{editId ? "Edit Notice" : "Post Notice"}</DialogTitle></DialogHeader>
               <div className="space-y-4">
                 <div><Label>Title *</Label><Input value={form.title} onChange={e => setForm({ ...form, title: e.target.value })} /></div>
                 <div><Label>Content *</Label><Textarea value={form.content} onChange={e => setForm({ ...form, content: e.target.value })} rows={4} /></div>
+                <div>
+                  <Label>Notice image</Label>
+                  <Input type="file" accept="image/*" onChange={e => setImageFile(e.target.files?.[0] || null)} />
+                  {(imageFile || form.image_url) && <p className="text-xs text-muted-foreground mt-1">{imageFile ? imageFile.name : "Current image will be kept."}</p>}
+                </div>
                 {isSuperAdmin && (
                   <>
                     <div className="flex items-center gap-2">
@@ -108,6 +124,7 @@ const Notices = () => {
             <div className="space-y-4">
               {notices.map(n => (
                 <div key={n.id} className="p-4 bg-muted rounded-lg">
+                  {n.image_url && <img src={n.image_url} alt={n.title} className="mb-4 max-h-72 w-full rounded-md object-cover" />}
                   <div className="flex justify-between items-start">
                     <div>
                       <div className="flex items-center gap-2 mb-1">
@@ -115,6 +132,7 @@ const Notices = () => {
                         {n.is_global && <Badge className="bg-primary text-primary-foreground">Global</Badge>}
                       </div>
                       <p className="text-sm text-foreground">{n.content}</p>
+                      {n.image_url && <p className="text-xs text-muted-foreground mt-2 flex items-center gap-1"><ImageIcon className="h-3 w-3" />Image attached</p>}
                       <p className="text-xs text-muted-foreground mt-2">{new Date(n.created_at).toLocaleString()}</p>
                     </div>
                     <div className="flex gap-1">
