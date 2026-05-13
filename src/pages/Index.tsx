@@ -62,7 +62,7 @@ const Index = () => {
                     <Play className="mr-2 h-6 w-6 fill-current" /> Watch Live
                   </Button>
                 </a>
-                <Link to="/contact">
+                <Link to="/quote">
                   <Button size="lg" variant="outline" className="h-16 px-10 text-lg border-primary/30 text-primary hover:bg-primary/10 rounded-2xl transition-all duration-500">
                     Get a Quote
                   </Button>
