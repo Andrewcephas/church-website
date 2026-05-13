@@ -81,8 +81,8 @@ Deno.serve(async (req) => {
         "Content-Type": "application/json",
       },
     });
-  } catch (error) {
-    return new Response(JSON.stringify({ error: error.message, quotes: fallbackQuotes("Faith") }), {
+  } catch (_) {
+    return new Response(JSON.stringify({ quotes: fallbackQuotes("Faith") }), {
       status: 200,
       headers: {
         ...corsHeaders,
