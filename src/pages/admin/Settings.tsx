@@ -3,14 +3,16 @@ import { useSiteSettings, type SiteSettings } from "@/hooks/use-site-settings";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
 import { 
   Save, 
   Palette, 
   Image as ImageIcon, 
-  Eye,
-  RefreshCw
+  RefreshCw,
+  Plus,
+  Trash2
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
@@ -24,8 +26,11 @@ export default function Settings() {
   const [colorSettings, setColorSettings] = useState<any[]>([]);
   const [formData, setFormData] = useState(initialSettings);
 
+  const normalizeHsl = (value: string) => value.replace(/^hsl\(/, "").replace(/\)$/, "").trim();
+
   useEffect(() => {
     const root = getComputedStyle(document.documentElement);
+    const savedColors = initialSettings.theme_colors || {};
     const colors = [
       { name: 'Primary', key: '--primary', value: root.getPropertyValue('--primary').trim(), category: 'primary', hsl: '217 100% 50%' },
       { name: 'Primary Light', key: '--primary-light', value: root.getPropertyValue('--primary-light').trim(), category: 'primary', hsl: '217 100% 60%' },
@@ -35,8 +40,9 @@ export default function Settings() {
       { name: 'Background', key: '--background', value: root.getPropertyValue('--background').trim(), category: 'background', hsl: '0 0% 100%' },
       { name: 'Foreground', key: '--foreground', value: root.getPropertyValue('--foreground').trim(), category: 'text', hsl: '240 10% 10%' },
     ];
-    setColorSettings(colors);
-  }, []);
+    setColorSettings(colors.map(c => ({ ...c, hsl: normalizeHsl((savedColors as any)[c.key] || c.value || c.hsl) })));
+    setFormData(initialSettings);
+  }, [initialSettings]);
 
   const handleColorChange = (key: string, hslValue: string) => {
     setColorSettings(prev => 
@@ -79,16 +85,15 @@ export default function Settings() {
   const saveSettings = async () => {
     setLoading(true);
     try {
-      const rows = Object.entries(formData).map(([key, value]) => ({ key, value: value as any }));
-      const { error } = await supabase.from('site_settings').upsert(rows, { onConflict: 'key' });
-      if (error) throw error;
-      updateSettings(formData);
-      
-      // Save color preferences
       const colorVars = colorSettings.reduce((acc, c) => {
         acc[c.key] = `hsl(${c.hsl})`;
         return acc;
       }, {} as any);
+      const settingsToSave = { ...formData, theme_colors: colorVars };
+      const rows = Object.entries(settingsToSave).map(([key, value]) => ({ key, value: value as any }));
+      const { error } = await supabase.from('site_settings').upsert(rows, { onConflict: 'key' });
+      if (error) throw error;
+      updateSettings(settingsToSave);
       
       // Apply all colors permanently
       Object.entries(colorVars).forEach(([key, value]) => {
@@ -195,6 +200,16 @@ export default function Settings() {
           <CardContent className="space-y-4">
             <div className="grid sm:grid-cols-2 gap-4">
               <div className="space-y-2">
+                <Label htmlFor="website_url">Website</Label>
+                <Input
+                  id="website_url"
+                  name="website_url"
+                  value={formData.website_url}
+                  onChange={(e) => setFormData({...formData, website_url: e.target.value})}
+                  placeholder="https://globalpowerchurch.co.ke"
+                />
+              </div>
+              <div className="space-y-2">
                 <Label htmlFor="youtube_url">YouTube Channel</Label>
                 <Input
                   id="youtube_url"
@@ -249,6 +264,43 @@ export default function Settings() {
                 />
               </div>
             </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <ImageIcon className="h-5 w-5" />
+              Ministries
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {(formData.ministries || []).map((ministry, index) => (
+              <div key={index} className="grid gap-3 rounded-lg border border-border p-3 sm:grid-cols-[1fr_2fr_auto]">
+                <div className="space-y-2">
+                  <Label>Ministry name</Label>
+                  <Input value={ministry.title} onChange={(e) => {
+                    const ministries = [...(formData.ministries || [])];
+                    ministries[index] = { ...ministries[index], title: e.target.value };
+                    setFormData({ ...formData, ministries });
+                  }} />
+                </div>
+                <div className="space-y-2">
+                  <Label>Description</Label>
+                  <Textarea value={ministry.description} onChange={(e) => {
+                    const ministries = [...(formData.ministries || [])];
+                    ministries[index] = { ...ministries[index], description: e.target.value };
+                    setFormData({ ...formData, ministries });
+                  }} rows={2} />
+                </div>
+                <Button type="button" variant="ghost" size="icon" className="self-end" onClick={() => setFormData({ ...formData, ministries: (formData.ministries || []).filter((_, i) => i !== index) })}>
+                  <Trash2 className="h-4 w-4 text-destructive" />
+                </Button>
+              </div>
+            ))}
+            <Button type="button" variant="outline" onClick={() => setFormData({ ...formData, ministries: [...(formData.ministries || []), { title: "", description: "" }] })}>
+              <Plus className="h-4 w-4 mr-2" />Add Ministry
+            </Button>
           </CardContent>
         </Card>
 

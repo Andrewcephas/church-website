@@ -1,23 +1,52 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 
-const LOVABLE_API_URL = Deno.env.get("SUPABASE_URL")!.replace(
-  ".supabase.co",
-  ".functions.supabase.co"
-);
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
+};
+
+const fallbackQuotes = (theme: string) => [
+  `${theme} rises when we trust God beyond what we can see.`,
+  `Let your ${theme.toLowerCase()} speak louder than fear today.`,
+  `God is still writing powerful testimony through every season of ${theme.toLowerCase()}.`,
+  `A heart anchored in Christ will always find strength for the next step.`,
+  `May your life reflect God's power, grace, and transforming love today.`,
+];
+
+const parseQuotes = (content: string, theme: string): string[] => {
+  const cleaned = content.replace(/```json|```/gi, "").trim();
+  try {
+    const parsed = JSON.parse(cleaned);
+    if (Array.isArray(parsed)) return parsed.map(String).filter(Boolean).slice(0, 5);
+  } catch (_) {}
+
+  const match = cleaned.match(/\[[\s\S]*\]/);
+  if (match) {
+    try {
+      const parsed = JSON.parse(match[0]);
+      if (Array.isArray(parsed)) return parsed.map(String).filter(Boolean).slice(0, 5);
+    } catch (_) {}
+  }
+
+  const lines = cleaned.split(/\n+/).map((line) => line.replace(/^[-\d.)\s"]+|"$/g, "").trim()).filter(Boolean);
+  return lines.length ? lines.slice(0, 5) : fallbackQuotes(theme);
+};
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", {
-      headers: {
-        "Access-Control-Allow-Origin": "*",
-        "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-      },
+      headers: corsHeaders,
     });
   }
 
   try {
-    const { theme } = await req.json();
+    const { theme: rawTheme } = await req.json().catch(() => ({ theme: "Faith" }));
+    const theme = String(rawTheme || "Faith").slice(0, 120);
     const apiKey = Deno.env.get("LOVABLE_API_KEY");
+    if (!apiKey) return new Response(JSON.stringify({ quotes: fallbackQuotes(theme) }), {
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
 
     const response = await fetch("https://api.lovable.dev/v1/chat/completions", {
       method: "POST",
@@ -44,22 +73,20 @@ Deno.serve(async (req) => {
 
     const result = await response.json();
     const content = result.choices?.[0]?.message?.content || "[]";
-    // Extract JSON array from response
-    const match = content.match(/\[[\s\S]*\]/);
-    const quotes = match ? JSON.parse(match[0]) : [];
+    const quotes = parseQuotes(content, theme);
 
     return new Response(JSON.stringify({ quotes }), {
       headers: {
+        ...corsHeaders,
         "Content-Type": "application/json",
-        "Access-Control-Allow-Origin": "*",
       },
     });
-  } catch (error) {
-    return new Response(JSON.stringify({ error: error.message, quotes: [] }), {
-      status: 500,
+  } catch (_) {
+    return new Response(JSON.stringify({ quotes: fallbackQuotes("Faith") }), {
+      status: 200,
       headers: {
+        ...corsHeaders,
         "Content-Type": "application/json",
-        "Access-Control-Allow-Origin": "*",
       },
     });
   }

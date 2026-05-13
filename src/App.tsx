@@ -84,6 +84,7 @@ function App() {
               <Route path="notices" element={<Notices />} />
               <Route path="messages" element={<Messages />} />
               <Route path="accounts" element={<Accounts />} />
+              <Route path="*" element={<Dashboard />} />
             </Route>
 
             <Route path="*" element={<PublicLayout><NotFound /></PublicLayout>} />

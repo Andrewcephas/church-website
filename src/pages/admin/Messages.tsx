@@ -8,10 +8,8 @@ import { Badge } from "@/components/ui/badge";
 import { Send, Mail, MailOpen } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { useUserRole } from "@/hooks/use-user-role";
 
 const Messages = () => {
-  const { isSuperAdmin } = useUserRole();
   const [messages, setMessages] = useState<any[]>([]);
   const [admins, setAdmins] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -23,12 +21,20 @@ const Messages = () => {
   useEffect(() => {
     const init = async () => {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
+      if (!user) { setLoading(false); return; }
       setCurrentUserId(user.id);
 
-      // Fetch other admins (branch_admin or super_admin)
-      const { data: roles } = await supabase.from("user_roles").select("user_id, role, branches(branch_name)").neq("user_id", user.id);
-      if (roles) setAdmins(roles);
+      const [{ data: roles, error: rolesError }, { data: branches }] = await Promise.all([
+        supabase.from("user_roles").select("user_id, role, branch_id").neq("user_id", user.id).in("role", ["super_admin", "branch_admin", "secretary", "teacher"]),
+        supabase.from("branches").select("id, branch_name"),
+      ]);
+      if (rolesError) toast({ title: "Could not load recipients", description: rolesError.message, variant: "destructive" });
+      const branchMap = new Map((branches || []).map((b: any) => [b.id, b.branch_name]));
+      const byUser = new Map<string, any>();
+      (roles || []).forEach((r: any) => {
+        if (!byUser.has(r.user_id)) byUser.set(r.user_id, { ...r, branch_name: branchMap.get(r.branch_id) });
+      });
+      setAdmins(Array.from(byUser.values()));
 
       // Fetch messages
       const { data: msgs } = await supabase.from("private_messages").select("*")
@@ -63,7 +69,8 @@ const Messages = () => {
   const getAdminLabel = (userId: string) => {
     const admin = admins.find(a => a.user_id === userId);
     if (!admin) return userId.slice(0, 8) + "...";
-    return `${admin.role === "super_admin" ? "Bishop" : "Pastor"} ${admin.branches?.branch_name ? `(${admin.branches.branch_name})` : ""}`;
+    const label = admin.role === "super_admin" ? "Bishop" : admin.role === "branch_admin" ? "Pastor" : admin.role === "secretary" ? "Secretary" : "Teacher";
+    return `${label} ${admin.branch_name ? `(${admin.branch_name})` : ""}`;
   };
 
   return (
@@ -79,7 +86,7 @@ const Messages = () => {
               <SelectContent>
                 {admins.map(a => (
                   <SelectItem key={a.user_id} value={a.user_id}>
-                    {a.role === "super_admin" ? "Bishop (Super Admin)" : `Pastor${a.branches?.branch_name ? ` - ${a.branches.branch_name}` : ""}`}
+                    {getAdminLabel(a.user_id)}
                   </SelectItem>
                 ))}
               </SelectContent>

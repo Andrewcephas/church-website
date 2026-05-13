@@ -19,10 +19,12 @@ const QuoteGenerator = () => {
   const [activeIndex, setActiveIndex] = useState(0);
   const [loading, setLoading] = useState(false);
   const [manualText, setManualText] = useState("");
+  const [authorName, setAuthorName] = useState("");
   const { toast } = useToast();
   const { settings } = useSiteSettings();
 
   const text = manualText.trim() || quotes[activeIndex] || "";
+  const author = authorName.trim();
 
   const generate = async () => {
     setLoading(true);
@@ -87,7 +89,7 @@ const QuoteGenerator = () => {
       const safeText = text || "Your inspirational quote will appear here.";
       const maxWidth = SIZE - 200;
       const topY = 290;
-      const bottomY = SIZE - 220;
+      const bottomY = SIZE - (author ? 260 : 220);
       const availH = bottomY - topY;
 
       // Binary search font size 28..120
@@ -112,15 +114,22 @@ const QuoteGenerator = () => {
       const startY = topY + (availH - totalH) / 2 + lineH / 2;
       bestLines.forEach((line, i) => ctx.fillText(line, SIZE / 2, startY + i * lineH));
 
+      if (author) {
+        ctx.fillStyle = "#d4a843";
+        ctx.font = "bold 34px sans-serif";
+        ctx.textAlign = "center";
+        ctx.fillText(`— ${author}`, SIZE / 2, SIZE - 240);
+      }
+
       // Footer contact info
       ctx.fillStyle = "#d4a843";
       ctx.font = "bold 22px sans-serif";
       ctx.fillText(`📞 ${settings.phone}  ✉ ${settings.email}`, SIZE / 2, SIZE - 130);
       ctx.fillStyle = "#ffffff";
       ctx.font = "italic 20px sans-serif";
-      ctx.fillText("globalpowerchurch.org", SIZE / 2, SIZE - 90);
+      ctx.fillText("globalpowerchurch.co.ke", SIZE / 2, SIZE - 90);
     }
-  }, [text, settings.phone, settings.email]);
+  }, [text, author, settings.phone, settings.email]);
 
   const download = () => {
     const c = canvasRef.current; if (!c) return;
@@ -184,13 +193,18 @@ const QuoteGenerator = () => {
 
               <div>
                 <Label>Or write your own text</Label>
-                <Textarea rows={4} value={manualText} onChange={e => setManualText(e.target.value)} placeholder="Type any verse, message, or announcement…" />
+                <Textarea rows={5} value={manualText} onChange={e => setManualText(e.target.value)} placeholder="Type any verse, message, or announcement…" className="resize-y whitespace-pre-wrap break-words" />
                 <p className="text-xs text-muted-foreground mt-1">Short text spreads large; long text auto-fits cleanly.</p>
+              </div>
+
+              <div>
+                <Label>Author name</Label>
+                <Input value={authorName} onChange={e => setAuthorName(e.target.value)} placeholder="e.g. Pastor Jane" />
               </div>
 
               <div className="flex gap-2">
                 <Button variant="outline" className="flex-1" onClick={copyText}><Copy className="h-4 w-4 mr-2" />Copy</Button>
-                <Button variant="outline" className="flex-1" onClick={() => { setManualText(""); setQuotes([]); }}><RefreshCcw className="h-4 w-4 mr-2" />Reset</Button>
+                <Button variant="outline" className="flex-1" onClick={() => { setManualText(""); setAuthorName(""); setQuotes([]); }}><RefreshCcw className="h-4 w-4 mr-2" />Reset</Button>
                 <Button className="flex-1" onClick={download}><Download className="h-4 w-4 mr-2" />Download</Button>
               </div>
             </CardContent>
@@ -216,6 +230,14 @@ function wrapText(ctx: CanvasRenderingContext2D, text: string, maxWidth: number)
     const test = cur ? cur + " " + w : w;
     if (ctx.measureText(test).width > maxWidth && cur) {
       lines.push(cur); cur = w;
+    } else if (ctx.measureText(test).width > maxWidth) {
+      let chunk = "";
+      for (const char of w) {
+        const next = chunk + char;
+        if (ctx.measureText(next).width > maxWidth && chunk) { lines.push(chunk); chunk = char; }
+        else chunk = next;
+      }
+      cur = chunk;
     } else cur = test;
   }
   if (cur) lines.push(cur);
