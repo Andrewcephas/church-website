@@ -84,14 +84,19 @@ const Navigation = () => {
              ))}
            </div>
 
-           <div className="hidden md:flex items-center space-x-4">
+            <div className="hidden md:flex items-center space-x-4">
+              <Link to="/login">
+                <Button variant="outline" className="h-11 px-5 border-primary/20 text-primary hover:bg-primary/5 rounded-xl font-bold transition-all hover:scale-105">
+                  <ShieldCheck className="h-4 w-4 mr-2" />Admin
+                </Button>
+              </Link>
              <a href={settings.youtube_url} target="_blank" rel="noopener noreferrer">
                <Button variant="outline" className="h-11 px-6 border-primary/20 text-primary hover:bg-primary/5 rounded-xl font-bold transition-all hover:scale-105">
                  <Play className="h-4 w-4 mr-2 fill-current" />Watch Live
                </Button>
              </a>
              <Link to="/quote">
-               <Button className="h-11 px-6 bg-primary hover:bg-primary-dark text-white rounded-xl font-bold shadow-lg shadow-primary/20 transition-all hover:scale-105">
+                <Button className="h-11 px-6 bg-primary hover:bg-primary-dark text-primary-foreground rounded-xl font-bold shadow-lg shadow-primary/20 transition-all hover:scale-105">
                  Get a Quote
                </Button>
              </Link>
