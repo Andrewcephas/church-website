@@ -24,15 +24,25 @@ const Messages = () => {
       if (!user) { setLoading(false); return; }
       setCurrentUserId(user.id);
 
-      const [{ data: roles, error: rolesError }, { data: branches }] = await Promise.all([
+      const [{ data: roles, error: rolesError }, { data: branches }, { data: members }, { data: logins }] = await Promise.all([
         supabase.from("user_roles").select("user_id, role, branch_id").neq("user_id", user.id).in("role", ["super_admin", "branch_admin", "secretary", "teacher"]),
         supabase.from("branches").select("id, branch_name"),
+        supabase.from("members").select("user_id, name"),
+        supabase.from("login_activity").select("user_id, user_email"),
       ]);
       if (rolesError) toast({ title: "Could not load recipients", description: rolesError.message, variant: "destructive" });
+      
       const branchMap = new Map((branches || []).map((b: any) => [b.id, b.branch_name]));
+      const nameMap = new Map((members || []).map((m: any) => [m.user_id, m.name]));
+      const emailMap = new Map((logins || []).map((l: any) => [l.user_id, l.user_email]));
+      
       const byUser = new Map<string, any>();
       (roles || []).forEach((r: any) => {
-        if (!byUser.has(r.user_id)) byUser.set(r.user_id, { ...r, branch_name: branchMap.get(r.branch_id) });
+        if (!byUser.has(r.user_id)) {
+          const name = nameMap.get(r.user_id);
+          const email = emailMap.get(r.user_id);
+          byUser.set(r.user_id, { ...r, branch_name: branchMap.get(r.branch_id), name, email });
+        }
       });
       setAdmins(Array.from(byUser.values()));
 
@@ -69,8 +79,10 @@ const Messages = () => {
   const getAdminLabel = (userId: string) => {
     const admin = admins.find(a => a.user_id === userId);
     if (!admin) return userId.slice(0, 8) + "...";
-    const label = admin.role === "super_admin" ? "Bishop" : admin.role === "branch_admin" ? "Pastor" : admin.role === "secretary" ? "Secretary" : "Teacher";
-    return `${label} ${admin.branch_name ? `(${admin.branch_name})` : ""}`;
+    const roleLabel = admin.role === "super_admin" ? "Bishop" : admin.role === "branch_admin" ? "Pastor" : admin.role === "secretary" ? "Secretary" : "Teacher";
+    const nameStr = admin.name || admin.email || "Unknown User";
+    const branchStr = admin.branch_name ? ` - ${admin.branch_name}` : "";
+    return `${nameStr} (${roleLabel}${branchStr})`;
   };
 
   return (
